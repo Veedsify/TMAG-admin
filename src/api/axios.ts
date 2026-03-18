@@ -9,10 +9,10 @@ export function getAuthCookie(): string | undefined {
   return Cookies.get(COOKIE_NAME);
 }
 
-export function setAuthCookie(token: string, expUnix: number): void {
+export function setAuthCookie(token: string, expMs: number): void {
   Cookies.set(COOKIE_NAME, token, {
     path: "/",
-    expires: new Date(expUnix * 1000),
+    expires: new Date(expMs),
     sameSite: "Lax",
   });
 }
@@ -41,10 +41,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const url = error.config?.url || "";
-    const isAuthEndpoint = url.includes("/admin/auth/");
-    if (error.response?.status === 401 && !isAuthEndpoint) {
+    const isLoginEndpoint = url.includes("/admin/auth/login");
+    if (error.response?.status === 401 && !isLoginEndpoint) {
       removeAuthCookie();
-      window.location.href = "/login";
+      window.location.href = "/admin";
     }
     return Promise.reject(error);
   },

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "./api";
+import { getAuthCookie } from "./axios";
 import type { LoginRequest, CreditAdjustment } from "./types";
 
 export const queryKeys = {
@@ -91,8 +92,9 @@ export const useCurrentUser = () => {
     queryKey: queryKeys.currentUser,
     queryFn: async () => {
       const { data } = await adminApi.getCurrentUser();
-      return data;
+      return data.data;
     },
+    enabled: !!getAuthCookie(),
   });
 };
 

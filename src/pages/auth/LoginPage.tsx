@@ -1,27 +1,50 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Eye, EyeOff } from "lucide-react";
-import { useAdminAuthStore, PREVIEW_ADMIN } from "../../stores/adminAuthStore";
+import { useAdminAuthStore } from "../../stores/adminAuthStore";
+import { adminApi } from "../../api/api";
+import { setAuthCookie } from "../../api/axios";
 
 export default function LoginPage() {
-    const [email, setEmail] = useState(PREVIEW_ADMIN?.email ?? "");
-    const [password, setPassword] = useState("admin123");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const login = useAdminAuthStore((s) => s.login);
     const navigate = useNavigate();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email || !password) {
             setError("Please fill in all fields");
             return;
         }
-        if (PREVIEW_ADMIN) {
-            login(PREVIEW_ADMIN);
+
+        setIsLoading(true);
+        setError("");
+
+        try {
+            const response = await adminApi.login({ email, password });
+            const { token, exp, user } = response.data.data;
+            
+            setAuthCookie(token, exp);
+            login({
+                id: String(user.id),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                permissions: user.permissions || [],
+            });
             navigate("/admin/dashboard");
-        } else {
-            setError("Invalid credentials");
+        } catch (err: any) {
+            if (err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else {
+                setError("Invalid credentials or access denied");
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -81,21 +104,15 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90 transition-colors duration-150"
+                            disabled={isLoading}
+                            className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Sign in
+                            {isLoading ? "Signing in..." : "Sign in"}
                         </button>
                     </form>
 
                     <p className="text-center text-xs text-muted">
                         Protected area. Unauthorized access is prohibited.
-                    </p>
-                </div>
-
-                {/* Preview hint */}
-                <div className="mt-4 bg-white/60 rounded-xl border border-border-light/50 p-4 text-center">
-                    <p className="text-xs text-muted">
-                        <span className="font-medium text-heading">Preview Mode</span> — Using mock admin credentials. Click "Sign in" to continue.
                     </p>
                 </div>
             </div>

@@ -1,3 +1,10 @@
+// API Response wrapper (matches Spring Boot SuccessResponse)
+export interface ApiResponse<T> {
+  message: string;
+  success: boolean;
+  data: T;
+}
+
 // Auth
 export interface AdminUser {
   id: string;

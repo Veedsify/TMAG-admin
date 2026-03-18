@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     removeAuthCookie();
     setIsAuthenticated(false);
-    window.location.href = "/login";
+    window.location.href = "/admin";
   };
 
   return (

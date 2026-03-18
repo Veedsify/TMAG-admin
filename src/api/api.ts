@@ -1,5 +1,6 @@
 import api from "./axios";
 import type {
+  ApiResponse,
   AuthResponse,
   LoginRequest,
   AdminUser,
@@ -22,9 +23,9 @@ import type {
 
 export const adminApi = {
   // Auth - /admin/auth/*
-  login: (data: LoginRequest) => api.post<AuthResponse>("/admin/auth/login", data),
+  login: (data: LoginRequest) => api.post<ApiResponse<AuthResponse>>("/admin/auth/login", data),
   logout: () => api.post("/admin/auth/logout"),
-  getCurrentUser: () => api.get<AdminUser>("/admin/auth/me"),
+  getCurrentUser: () => api.get<ApiResponse<AdminUser>>("/admin/auth/me"),
 
   // Dashboard - /admin/dashboard/*
   getDashboardStats: () => api.get<DashboardStats>("/admin/dashboard/stats"),

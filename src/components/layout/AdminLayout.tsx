@@ -236,7 +236,35 @@ function Header() {
 /* ─── Auth Guard ─────────────────────────────────────────── */
 function AuthGuard({ children }: { children: React.ReactNode }) {
     const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
-    if (!isAuthenticated) return <Navigate to="/admin" replace />;
+    const isSuperAdmin = useAdminAuthStore((s) => s.isSuperAdmin);
+    
+    if (!isAuthenticated) {
+        return <Navigate to="/admin" replace />;
+    }
+    
+    if (!isSuperAdmin()) {
+        return (
+            <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
+                <div className="text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-danger/10 flex items-center justify-center mx-auto mb-4">
+                        <Shield className="w-8 h-8 text-danger" />
+                    </div>
+                    <h1 className="text-2xl font-serif font-bold text-heading mb-2">Access Denied</h1>
+                    <p className="text-muted mb-4">You do not have super admin privileges to access this panel.</p>
+                    <button
+                        onClick={() => {
+                            useAdminAuthStore.getState().logout();
+                            window.location.href = "/admin";
+                        }}
+                        className="px-4 py-2 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90"
+                    >
+                        Sign out
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
     return <>{children}</>;
 }
 
