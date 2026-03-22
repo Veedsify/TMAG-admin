@@ -19,6 +19,10 @@ import type {
   AdminRole,
   AbuseFlag,
   HRCreateEmployeeRequest,
+  CompanyPricing,
+  CompanyCreditQuote,
+  CompanyCreditPurchase,
+  InitiatePurchaseResponse,
 } from "./types";
 
 export const adminApi = {
@@ -144,4 +148,18 @@ export const adminApi = {
     api.post(`/v1/companies/${companyId}/purchase-credits`, { amount, reference }),
   hrGetCreditLedger: (companyId: string) =>
     api.get("/v1/credits", { params: { companyId } }),
+
+  // Company Admin Credit Purchase - /v1/company-admin/credits/*
+  getCompanyPricing: (companyId: string) =>
+    api.get<ApiResponse<CompanyPricing>>(`/v1/company-admin/credits/pricing`, { params: { companyId } }),
+  getCompanyCreditQuote: (companyId: string, credits: number) =>
+    api.post<ApiResponse<CompanyCreditQuote>>(`/v1/company-admin/credits/quote`, null, { params: { companyId, credits } }),
+  initiateCompanyCreditPurchase: (companyId: string, credits: number) =>
+    api.post<ApiResponse<InitiatePurchaseResponse>>(`/v1/company-admin/credits/purchase`, { companyId, credits }),
+  verifyCompanyCreditPurchase: (txRef: string, transactionId?: string) =>
+    api.get<ApiResponse<{ success: boolean; purchase: CompanyCreditPurchase }>>(`/v1/company-admin/credits/verify/${txRef}`, { params: transactionId ? { transaction_id: transactionId } : {} }),
+  getCompanyCreditHistory: (companyId?: string) =>
+    api.get<ApiResponse<CompanyCreditPurchase[]>>(`/v1/company-admin/credits/history`, { params: companyId ? { companyId } : {} }),
+  getCompanyCreditPurchase: (txRef: string) =>
+    api.get<ApiResponse<CompanyCreditPurchase>>(`/v1/company-admin/credits/${txRef}`),
 };

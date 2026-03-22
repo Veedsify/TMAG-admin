@@ -61,6 +61,12 @@ export const queryKeys = {
   // Abuse Flags - Use in: AbusePage
   abuseFlags: (params?: { resolved?: boolean }) => 
     ["admin", "abuse", params] as const,
+
+  // Company Credit Purchase - Use in: CreditsPage
+  companyPricing: (companyId: string) =>
+    ["admin", "company-credits", "pricing", companyId] as const,
+  companyCreditHistory: (companyId?: string) =>
+    ["admin", "company-credits", "history", companyId] as const,
 };
 
 // ============================================================================
@@ -200,7 +206,6 @@ export const useResetUserCredits = () => {
 };
 
 export const useResetUserPassword = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.resetUserPassword(id),
   });
@@ -693,6 +698,58 @@ export const useResolveAbuseFlag = () => {
     mutationFn: (id: string) => adminApi.resolveAbuseFlag(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.abuseFlags() });
+    },
+  });
+};
+
+// ============================================================================
+// COMPANY CREDIT PURCHASE HOOKS - Use in: CreditsPage
+// ============================================================================
+
+export const useCompanyPricing = (companyId: string) => {
+  return useQuery({
+    queryKey: queryKeys.companyPricing(companyId),
+    queryFn: async () => {
+      const { data } = await adminApi.getCompanyPricing(companyId);
+      return data.data;
+    },
+    enabled: !!companyId,
+  });
+};
+
+export const useCompanyCreditQuote = () => {
+  return useMutation({
+    mutationFn: ({ companyId, credits }: { companyId: string; credits: number }) =>
+      adminApi.getCompanyCreditQuote(companyId, credits),
+  });
+};
+
+export const useInitiateCompanyCreditPurchase = () => {
+  return useMutation({
+    mutationFn: ({ companyId, credits }: { companyId: string; credits: number }) =>
+      adminApi.initiateCompanyCreditPurchase(companyId, credits),
+  });
+};
+
+export const useVerifyCompanyCreditPurchase = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ txRef, transactionId }: { txRef: string; transactionId?: string }) =>
+      adminApi.verifyCompanyCreditPurchase(txRef, transactionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "company-credits"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies });
+      queryClient.invalidateQueries({ queryKey: queryKeys.creditLedger() });
+    },
+  });
+};
+
+export const useCompanyCreditHistory = (companyId?: string) => {
+  return useQuery({
+    queryKey: queryKeys.companyCreditHistory(companyId),
+    queryFn: async () => {
+      const { data } = await adminApi.getCompanyCreditHistory(companyId);
+      return data.data;
     },
   });
 };

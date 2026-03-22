@@ -15,6 +15,7 @@ export interface AdminUser {
   lastLogin: string;
   createdAt: string;
   permissions: string[];
+  avatar?: string;
 }
 
 export interface AuthResponse {
@@ -229,6 +230,69 @@ export interface AbuseFlag {
 export interface ApiError {
   message: string;
   code?: string;
+}
+
+// Company Credit Purchase
+export interface CompanyPricing {
+  companyId: string;
+  companyName: string;
+  currency: "USD" | "NGN" | "EUR" | "GBP";
+  currencySymbol: string;
+  pricePerCredit: number;
+  minCredits: number;
+  maxCredits: number;
+  discountTier1Threshold: number | null;
+  discountTier1Amount: number | null;
+  discountTier2Threshold: number | null;
+  discountTier2Amount: number | null;
+  discountTier3Threshold: number | null;
+  discountTier3Amount: number | null;
+  totalCredits: number;
+  usedCredits: number;
+}
+
+export interface CompanyCreditQuote {
+  companyId: string;
+  companyName: string;
+  credits: number;
+  basePrice: number;
+  discountAmount: number;
+  totalAmount: number;
+  currency: "USD" | "NGN" | "EUR" | "GBP";
+  currencySymbol: string;
+  pricePerCredit: number;
+  appliedDiscountTier: string | null;
+}
+
+export interface CompanyCreditPurchase {
+  id: string;
+  txRef: string;
+  flwRef: string | null;
+  userId: string;
+  companyId: string | null;
+  creditsPurchased: number;
+  currency: "USD" | "NGN" | "EUR" | "GBP";
+  currencySymbol: string;
+  pricePerCredit: number;
+  amount: number;
+  amountPaid: number | null;
+  status: string;
+  flutterwaveStatus: string | null;
+  paidAt: string | null;
+  failedAt: string | null;
+  failedReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InitiatePurchaseResponse {
+  txRef: string;
+  paymentLink: string;
+  credits: number;
+  amount: number;
+  currency: string;
+  currencySymbol: string;
+  purchaseId: string;
 }
 
 // ─── HR Management ────────────────────────────────────────────

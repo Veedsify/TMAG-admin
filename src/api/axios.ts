@@ -42,7 +42,7 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url || "";
     const isLoginEndpoint = url.includes("/admin/auth/login");
-    if (error.response?.status === 401 && !isLoginEndpoint) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !isLoginEndpoint) {
       removeAuthCookie();
       window.location.href = "/admin";
     }

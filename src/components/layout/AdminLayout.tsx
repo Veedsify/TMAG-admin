@@ -24,6 +24,7 @@ import {
 import { cn } from "../../lib/utils";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
 import { useSidebarStore } from "../../stores/sidebarStore";
+import { useAuth } from "../../context/AuthContext";
 
 /* ─── Navigation items ───────────────────────────────────── */
 const navGroups = [
@@ -235,13 +236,24 @@ function Header() {
 
 /* ─── Auth Guard ─────────────────────────────────────────── */
 function AuthGuard({ children }: { children: React.ReactNode }) {
-    const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
+    const { isAuthenticated, isLoading, logout } = useAuth();
     const isSuperAdmin = useAdminAuthStore((s) => s.isSuperAdmin);
-    
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background-primary flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+                    <p className="text-sm text-muted">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (!isAuthenticated) {
         return <Navigate to="/admin" replace />;
     }
-    
+
     if (!isSuperAdmin()) {
         return (
             <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
@@ -252,10 +264,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
                     <h1 className="text-2xl font-serif font-bold text-heading mb-2">Access Denied</h1>
                     <p className="text-muted mb-4">You do not have super admin privileges to access this panel.</p>
                     <button
-                        onClick={() => {
-                            useAdminAuthStore.getState().logout();
-                            window.location.href = "/admin";
-                        }}
+                        onClick={logout}
                         className="px-4 py-2 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90"
                     >
                         Sign out
@@ -264,7 +273,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
             </div>
         );
     }
-    
+
     return <>{children}</>;
 }
 

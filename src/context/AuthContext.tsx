@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect } from "react";
+import type { ReactNode } from "react";
 import { useCurrentUser } from "../api";
 import { getAuthCookie, removeAuthCookie } from "../api/axios";
-import type { AdminUser } from "../api/types";
+import { useAdminAuthStore } from "../stores/adminAuthStore";
 
 interface AuthContextType {
-  user: AdminUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   logout: () => void;
@@ -13,21 +13,34 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!getAuthCookie());
+  const hasCookie = !!getAuthCookie();
   const { data: user, isLoading } = useCurrentUser();
+  const login = useAdminAuthStore((s) => s.login);
 
   useEffect(() => {
-    setIsAuthenticated(!!getAuthCookie());
-  }, [user]);
+    if (user) {
+      login({
+        id: String(user.id),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions: user.permissions || [],
+        avatar: user.avatar,
+      });
+    }
+  }, [user, login]);
 
   const logout = () => {
     removeAuthCookie();
-    setIsAuthenticated(false);
+    useAdminAuthStore.getState().logout();
     window.location.href = "/admin";
   };
 
+  // Authenticated = cookie exists AND user data loaded from API
+  const isAuthenticated = hasCookie && !!user;
+
   return (
-    <AuthContext.Provider value={{ user: user || null, isLoading, isAuthenticated, logout }}>
+    <AuthContext.Provider value={{ isLoading, isAuthenticated, logout }}>
       {children}
     </AuthContext.Provider>
   );
