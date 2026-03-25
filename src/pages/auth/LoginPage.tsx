@@ -4,6 +4,7 @@ import { Shield, Eye, EyeOff } from "lucide-react";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
 import { adminApi } from "../../api/api";
 import { setAuthCookie } from "../../api/axios";
+import { AxiosError } from "axios";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function LoginPage() {
         try {
             const response = await adminApi.login({ email, password });
             const { token, exp, user } = response.data.data;
-
+            console.log(user)
             setAuthCookie(token, exp);
             login({
                 id: String(user.id),
@@ -37,12 +38,14 @@ export default function LoginPage() {
                 permissions: user.permissions || [],
             });
             navigate("/admin/dashboard");
-        } catch (err: any) {
-            if (err.response?.data?.message) {
-                setError(err.response.data.message);
-            } else {
-                setError("Invalid credentials or access denied");
-            }
+        } catch (err) {
+
+            if (err instanceof AxiosError)
+                if (err.response?.data?.message) {
+                    setError(err.response.data.message);
+                } else {
+                    setError("Invalid credentials or access denied");
+                }
         } finally {
             setIsLoading(false);
         }
