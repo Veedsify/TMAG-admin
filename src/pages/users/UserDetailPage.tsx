@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -19,9 +19,20 @@ import {
   Plus,
   Minus,
   KeyRound,
+  LucideLoader2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import {
+  useUser,
+  useGeneratedPlans,
+  useCreditLedger,
+  useSuspendUser,
+  useActivateUser,
+  useResetUserCredits,
+  useUpdateUser,
+  useResetUserPassword,
+} from "../../api/hooks";
+import type { GeneratedPlan, CreditLedgerEntry, ManagedUser } from "../../api/types";
 
 type TabKey = "overview" | "edit" | "credits" | "ledger" | "plans";
 
@@ -36,19 +47,21 @@ const TABS: { key: TabKey; label: string; path: string }[] = [
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const {
-    users,
-    plans,
-    creditLedger,
-    suspendUser,
-    reactivateUser,
-    resetUserCredits,
-    updateUser,
-  } = useAdminDataStore();
+  
+  const { data: userData, isLoading: userLoading } = useUser(id ?? "");
+  const { data: plansData } = useGeneratedPlans({ userId: id });
+  const { data: ledgerData } = useCreditLedger({ userId: id });
 
-  const user = users.find((u) => u.id === id);
+  const suspendMutation = useSuspendUser();
+  const activateMutation = useActivateUser();
+  const resetCreditsMutation = useResetUserCredits();
+  const updateMutation = useUpdateUser();
+  const resetPasswordMutation = useResetUserPassword();
 
-  // Determine active tab from pathname
+  const user = userData as ManagedUser | undefined;
+  const plans: GeneratedPlan[] = (plansData ?? []) as GeneratedPlan[];
+  const ledger: CreditLedgerEntry[] = (ledgerData ?? []) as CreditLedgerEntry[];
+
   const basePath = `/admin/users/${id}`;
   const activeTab: TabKey = (() => {
     const suffix = location.pathname.replace(basePath, "");
@@ -56,18 +69,36 @@ export default function UserDetailPage() {
     return match ? match.key : "overview";
   })();
 
-  // Edit form state
   const [editForm, setEditForm] = useState({
-    name: user?.name ?? "",
-    email: user?.email ?? "",
-    phone: user?.phone ?? "",
-    location: user?.location ?? "",
-    bio: user?.bio ?? "",
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
   });
 
-  // Credits form state
   const [creditAmount, setCreditAmount] = useState(10);
   const [creditReason, setCreditReason] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        name: user.name ?? "",
+        email: user.email ?? "",
+        phone: (user as any).phone ?? "",
+        location: (user as any).location ?? "",
+        bio: (user as any).bio ?? "",
+      });
+    }
+  }, [user]);
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -77,24 +108,48 @@ export default function UserDetailPage() {
     );
   }
 
-  const userPlans = plans.filter((p) => p.userId === user.id);
-  const userLedger = creditLedger.filter((e) => e.userId === user.id);
+  const userPlans = plans;
+  const userLedger = ledger;
   const recentLedger = userLedger.slice(0, 5);
   const totalCredits = user.creditsUsed + user.creditsRemaining;
 
   const handleSaveEdit = () => {
-    updateUser(user.id, {
-      name: editForm.name,
-      email: editForm.email,
-      phone: editForm.phone || undefined,
-      location: editForm.location || undefined,
-      bio: editForm.bio || undefined,
+    updateMutation.mutate({
+      id: user.id,
+      data: {
+        name: editForm.name,
+        email: editForm.email,
+        phone: editForm.phone || undefined,
+        location: editForm.location || undefined,
+        bio: editForm.bio || undefined,
+      },
+    });
+  };
+
+  const handleSuspend = () => {
+    suspendMutation.mutate(user.id);
+  };
+
+  const handleActivate = () => {
+    activateMutation.mutate(user.id);
+  };
+
+  const handleAddCredits = (amount: number) => {
+    resetCreditsMutation.mutate({
+      id: user.id,
+      amount: user.creditsRemaining + amount,
+    });
+  };
+
+  const handleDeductCredits = (amount: number) => {
+    resetCreditsMutation.mutate({
+      id: user.id,
+      amount: Math.max(0, user.creditsRemaining - amount),
     });
   };
 
   return (
     <div className="space-y-8">
-      {/* Back Link */}
       <Link
         to="/admin/users"
         className="inline-flex items-center gap-2 text-sm text-muted hover:text-heading transition-colors duration-150"
@@ -102,7 +157,6 @@ export default function UserDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Users
       </Link>
 
-      {/* Tab Navigation */}
       <div className="border-b border-border">
         <nav className="flex gap-1 -mb-px">
           {TABS.map((tab) => (
@@ -122,10 +176,8 @@ export default function UserDetailPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
       {activeTab === "overview" && (
         <div className="space-y-8">
-          {/* Profile Card */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="w-14 h-14 rounded-full bg-accent/10 text-accent flex items-center justify-center text-xl font-bold font-serif shrink-0">
@@ -146,7 +198,7 @@ export default function UserDetailPage() {
                       {user.status}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-xl text-xs font-medium bg-accent/10 text-accent capitalize">
-                      {user.role.replace(/_/g, " ")}
+                      {user.role?.replace(/_/g, " ") ?? "user"}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-xl text-xs font-medium bg-gold/10 text-gold capitalize">
                       {user.planType}
@@ -158,33 +210,32 @@ export default function UserDetailPage() {
                     <Mail className="w-3.5 h-3.5" />
                     {user.email}
                   </span>
-                  {user.phone && (
+                  {(user as any).phone && (
                     <span className="flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5" />
-                      {user.phone}
+                      {(user as any).phone}
                     </span>
                   )}
-                  {user.location && (
+                  {(user as any).location && (
                     <span className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />
-                      {user.location}
+                      {(user as any).location}
                     </span>
                   )}
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
-                    Joined {new Date(user.joinedAt).toLocaleDateString()}
+                    Joined {user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : "N/A"}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5" />
-                    {user.role.replace(/_/g, " ")}
+                    {user.role?.replace(/_/g, " ") ?? "user"}
                   </span>
                 </div>
-                {user.bio && <p className="text-sm text-body">{user.bio}</p>}
+                {(user as any).bio && <p className="text-sm text-body">{(user as any).bio}</p>}
               </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
@@ -207,7 +258,7 @@ export default function UserDetailPage() {
               },
               {
                 label: "Last Active",
-                value: new Date(user.lastActivity).toLocaleDateString(),
+                value: user.lastActivity ? new Date(user.lastActivity).toLocaleDateString() : "N/A",
                 icon: Clock,
                 color: "text-muted",
               },
@@ -227,8 +278,7 @@ export default function UserDetailPage() {
             ))}
           </div>
 
-          {/* Risk Flags */}
-          {user.riskFlags.length > 0 && (
+          {user.riskFlags && user.riskFlags.length > 0 && (
             <div className="bg-warning/5 border border-warning/20 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4 h-4 text-warning" />
@@ -305,7 +355,8 @@ export default function UserDetailPage() {
             </div>
             <button
               onClick={handleSaveEdit}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150"
+              disabled={updateMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50"
             >
               <Save className="w-4 h-4" /> Save Changes
             </button>
@@ -315,7 +366,6 @@ export default function UserDetailPage() {
 
       {activeTab === "credits" && (
         <div className="space-y-6 max-w-2xl">
-          {/* Current Credits */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h2 className="text-lg font-serif font-bold text-heading mb-4">Current Credits</h2>
             <div className="flex items-center gap-6">
@@ -338,7 +388,6 @@ export default function UserDetailPage() {
             </div>
           </div>
 
-          {/* Add/Deduct Credits */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h2 className="text-lg font-serif font-bold text-heading mb-4">
               Adjust Credits
@@ -366,19 +415,16 @@ export default function UserDetailPage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => resetUserCredits(user.id, user.creditsRemaining + creditAmount)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150"
+                  onClick={() => handleAddCredits(creditAmount)}
+                  disabled={resetCreditsMutation.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150 disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" /> Add Credits
                 </button>
                 <button
-                  onClick={() =>
-                    resetUserCredits(
-                      user.id,
-                      Math.max(0, user.creditsRemaining - creditAmount)
-                    )
-                  }
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150"
+                  onClick={() => handleDeductCredits(creditAmount)}
+                  disabled={resetCreditsMutation.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150 disabled:opacity-50"
                 >
                   <Minus className="w-4 h-4" /> Deduct Credits
                 </button>
@@ -386,7 +432,6 @@ export default function UserDetailPage() {
             </div>
           </div>
 
-          {/* Recent Credit Movements */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h2 className="text-lg font-serif font-bold text-heading mb-4">
               Recent Credit Movements
@@ -476,9 +521,9 @@ export default function UserDetailPage() {
                       <td className="py-3 pr-3 text-muted text-xs max-w-[200px] truncate">
                         {entry.reason}
                       </td>
-                      <td className="py-3 pr-3 text-muted text-xs">{entry.triggeredBy}</td>
+                      <td className="py-3 pr-3 text-muted text-xs">{entry.triggeredBy ?? "—"}</td>
                       <td className="py-3 text-muted text-xs">
-                        {new Date(entry.timestamp).toLocaleString()}
+                        {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -539,7 +584,7 @@ export default function UserDetailPage() {
                         </span>
                       </td>
                       <td className="py-3 pr-3 text-body text-xs">
-                        {plan.vaccinations.length}
+                        {plan.vaccinations?.length ?? 0}
                       </td>
                       <td className="py-3 pr-3">
                         <span
@@ -556,7 +601,7 @@ export default function UserDetailPage() {
                         </span>
                       </td>
                       <td className="py-3 text-muted text-xs">
-                        {new Date(plan.createdAt).toLocaleDateString()}
+                        {plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -567,31 +612,37 @@ export default function UserDetailPage() {
         </div>
       )}
 
-      {/* Action Buttons — visible on all tabs */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
         <h3 className="text-sm font-semibold text-heading mb-4">Actions</h3>
         <div className="flex flex-wrap gap-2">
           {user.status === "active" ? (
             <button
-              onClick={() => suspendUser(user.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150"
+              onClick={handleSuspend}
+              disabled={suspendMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150 disabled:opacity-50"
             >
               <Ban className="w-4 h-4" /> Suspend User
             </button>
           ) : (
             <button
-              onClick={() => reactivateUser(user.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150"
+              onClick={handleActivate}
+              disabled={activateMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150 disabled:opacity-50"
             >
               <RotateCcw className="w-4 h-4" /> Reactivate User
             </button>
           )}
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-button-secondary text-body rounded-xl text-sm font-medium hover:bg-background-primary transition-colors duration-150">
-            <KeyRound className="w-4 h-4" /> Reset Password
+          <button
+            onClick={() => resetPasswordMutation.mutate(user.id)}
+            disabled={resetPasswordMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-button-secondary text-body rounded-xl text-sm font-medium hover:bg-background-primary transition-colors duration-150 disabled:opacity-50"
+          >
+            <KeyRound className="w-4 h-4" /> {resetPasswordMutation.isPending ? "Sending..." : "Reset Password"}
           </button>
           <button
-            onClick={() => resetUserCredits(user.id, 20)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-xl text-sm font-medium hover:bg-accent/20 transition-colors duration-150"
+            onClick={() => resetCreditsMutation.mutate({ id: user.id, amount: 20 })}
+            disabled={resetCreditsMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-xl text-sm font-medium hover:bg-accent/20 transition-colors duration-150 disabled:opacity-50"
           >
             <CreditCard className="w-4 h-4" /> Reset Credits
           </button>

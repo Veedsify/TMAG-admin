@@ -68,6 +68,7 @@ export interface Company {
   contactEmail: string;
   contactPhone?: string;
   address?: string;
+  billingCurrency?: "USD" | "NGN" | "EUR" | "GBP";
   createdAt: string;
 }
 

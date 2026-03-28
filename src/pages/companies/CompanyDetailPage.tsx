@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -18,9 +18,22 @@ import {
   Calendar,
   ShieldCheck,
   CalendarClock,
+  LucideLoader2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { 
+  useCompany, 
+  useCompanyEmployees, 
+  useUsers, 
+  useGeneratedPlans, 
+  useCreditLedger,
+  useFreezeCompany,
+  useUnfreezeCompany,
+  useAddCompanyCredits,
+  useUpgradeTier,
+  useUpdateCompany,
+} from "../../api/hooks";
+import type { ManagedUser, GeneratedPlan, CreditLedgerEntry } from "../../api/types";
 
 type TabKey =
   | "overview"
@@ -44,19 +57,24 @@ const TABS: { key: TabKey; label: string; path: string }[] = [
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const {
-    companies,
-    users,
-    plans,
-    creditLedger,
-    freezeCompany,
-    unfreezeCompany,
-    addCompanyCredits,
-    upgradeTier,
-    updateCompany,
-  } = useAdminDataStore();
+  
+  const { data: companyData, isLoading: companyLoading } = useCompany(id ?? "");
+  const { data: employeesData } = useCompanyEmployees(id ?? "");
+  const { data: usersData } = useUsers();
+  const { data: plansData } = useGeneratedPlans();
+  const { data: ledgerData } = useCreditLedger({ companyId: id });
 
-  const company = companies.find((c) => c.id === id);
+  const freezeMutation = useFreezeCompany();
+  const unfreezeMutation = useUnfreezeCompany();
+  const addCreditsMutation = useAddCompanyCredits();
+  const upgradeMutation = useUpgradeTier();
+  const updateMutation = useUpdateCompany();
+
+  const company = companyData;
+  const employees = employeesData ?? [];
+  const users: ManagedUser[] = usersData ?? [];
+  const plans: GeneratedPlan[] = plansData ?? [];
+  const ledger: CreditLedgerEntry[] = ledgerData ?? [];
 
   const basePath = `/admin/companies/${id}`;
   const activeTab: TabKey = (() => {
@@ -65,19 +83,38 @@ export default function CompanyDetailPage() {
     return match ? match.key : "overview";
   })();
 
-  // Edit form state
   const [editForm, setEditForm] = useState({
-    name: company?.name ?? "",
-    industry: company?.industry ?? "",
-    website: company?.website ?? "",
-    contactEmail: company?.contactEmail ?? "",
-    contactPhone: company?.contactPhone ?? "",
-    address: company?.address ?? "",
+    name: "",
+    industry: "",
+    website: "",
+    contactEmail: "",
+    contactPhone: "",
+    address: "",
   });
 
-  // Credits form state
   const [creditAmount, setCreditAmount] = useState(50);
   const [creditReason, setCreditReason] = useState("");
+
+  useEffect(() => {
+    if (company) {
+      setEditForm({
+        name: company.name ?? "",
+        industry: company.industry ?? "",
+        website: company.website ?? "",
+        contactEmail: company.contactEmail ?? "",
+        contactPhone: company.contactPhone ?? "",
+        address: company.address ?? "",
+      });
+    }
+  }, [company]);
+
+  if (companyLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   if (!company) {
     return (
@@ -87,14 +124,11 @@ export default function CompanyDetailPage() {
     );
   }
 
-  const companyUsers = users.filter((u) => u.companyId === company.id);
   const companyHrAdmins = users.filter(
     (u) => u.companyId === company.id && u.role === "hr_admin"
   );
   const companyPlans = plans.filter((p) => p.companyId === company.id);
-  const companyLedger = creditLedger.filter(
-    (e) => e.companyId === company.id
-  );
+  const companyLedger = ledger.filter((e) => e.companyId === company.id);
 
   const creditPercent =
     company.creditsPurchased > 0
@@ -104,19 +138,37 @@ export default function CompanyDetailPage() {
       : 0;
 
   const handleSaveEdit = () => {
-    updateCompany(company.id, {
-      name: editForm.name,
-      industry: editForm.industry,
-      website: editForm.website || undefined,
-      contactEmail: editForm.contactEmail,
-      contactPhone: editForm.contactPhone || undefined,
-      address: editForm.address || undefined,
+    updateMutation.mutate({
+      id: company.id,
+      data: {
+        name: editForm.name,
+        industry: editForm.industry,
+        website: editForm.website || undefined,
+        contactEmail: editForm.contactEmail,
+        contactPhone: editForm.contactPhone || undefined,
+        address: editForm.address || undefined,
+      },
     });
+  };
+
+  const handleFreeze = () => {
+    freezeMutation.mutate(company.id);
+  };
+
+  const handleUnfreeze = () => {
+    unfreezeMutation.mutate(company.id);
+  };
+
+  const handleAddCredits = (amount: number) => {
+    addCreditsMutation.mutate({ id: company.id, amount });
+  };
+
+  const handleUpgrade = () => {
+    upgradeMutation.mutate(company.id);
   };
 
   return (
     <div className="space-y-8">
-      {/* Back Link */}
       <Link
         to="/admin/companies"
         className="inline-flex items-center gap-2 text-sm text-muted hover:text-heading transition-colors duration-150"
@@ -124,7 +176,6 @@ export default function CompanyDetailPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Companies
       </Link>
 
-      {/* Tab Navigation */}
       <div className="border-b border-border">
         <nav className="flex gap-1 -mb-px overflow-x-auto">
           {TABS.map((tab) => (
@@ -144,10 +195,8 @@ export default function CompanyDetailPage() {
         </nav>
       </div>
 
-      {/* ─── Overview Tab ─── */}
       {activeTab === "overview" && (
         <div className="space-y-8">
-          {/* Profile Card */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="w-14 h-14 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
@@ -187,11 +236,11 @@ export default function CompanyDetailPage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
                   <span className="flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" />
-                    {company.industry}
+                    {company.industry || "N/A"}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5" />
-                    {company.contactEmail}
+                    {company.contactEmail || "N/A"}
                   </span>
                   {company.contactPhone && (
                     <span className="flex items-center gap-1.5">
@@ -214,37 +263,36 @@ export default function CompanyDetailPage() {
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     Created{" "}
-                    {new Date(company.createdAt).toLocaleDateString()}
+                    {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "N/A"}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
                 label: "Credits Purchased",
-                value: company.creditsPurchased,
+                value: company.creditsPurchased ?? 0,
                 icon: CreditCard,
                 color: "text-accent",
               },
               {
                 label: "Credits Remaining",
-                value: company.creditsRemaining,
+                value: company.creditsRemaining ?? 0,
                 icon: CreditCard,
                 color: "text-success",
               },
               {
                 label: "Plans Generated",
-                value: company.plansGenerated,
+                value: company.plansGenerated ?? 0,
                 icon: FileText,
                 color: "text-info",
               },
               {
                 label: "Active Employees",
-                value: company.activeEmployees,
+                value: company.activeEmployees ?? 0,
                 icon: Users,
                 color: "text-warning",
               },
@@ -264,7 +312,6 @@ export default function CompanyDetailPage() {
             ))}
           </div>
 
-          {/* Contract Renewal */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <div className="flex items-center gap-2 mb-2">
               <CalendarClock className="w-4 h-4 text-brand-muted" />
@@ -273,7 +320,7 @@ export default function CompanyDetailPage() {
               </h3>
             </div>
             <p className="text-lg font-bold font-serif text-heading">
-              {company.contractRenewal}
+              {company.contractRenewal ? new Date(company.contractRenewal).toLocaleDateString() : "N/A"}
             </p>
             <p className="text-xs text-muted mt-1">
               Next renewal date for this company&apos;s contract
@@ -282,7 +329,6 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── Edit Tab ─── */}
       {activeTab === "edit" && (
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 max-w-2xl">
           <h2 className="text-lg font-serif font-bold text-heading mb-5">
@@ -372,7 +418,8 @@ export default function CompanyDetailPage() {
             </div>
             <button
               onClick={handleSaveEdit}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150"
+              disabled={updateMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50"
             >
               <Save className="w-4 h-4" /> Save Changes
             </button>
@@ -380,10 +427,8 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── Credits Tab ─── */}
       {activeTab === "credits" && (
         <div className="space-y-6 max-w-2xl">
-          {/* Current Balance */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h2 className="text-lg font-serif font-bold text-heading mb-4">
               Current Balance
@@ -415,7 +460,6 @@ export default function CompanyDetailPage() {
             </div>
           </div>
 
-          {/* Add/Deduct Credits */}
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h2 className="text-lg font-serif font-bold text-heading mb-4">
               Adjust Credits
@@ -447,18 +491,16 @@ export default function CompanyDetailPage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() =>
-                    addCompanyCredits(company.id, creditAmount)
-                  }
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150"
+                  onClick={() => handleAddCredits(creditAmount)}
+                  disabled={addCreditsMutation.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150 disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" /> Add Credits
                 </button>
                 <button
-                  onClick={() =>
-                    addCompanyCredits(company.id, -creditAmount)
-                  }
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150"
+                  onClick={() => handleAddCredits(-creditAmount)}
+                  disabled={addCreditsMutation.isPending}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150 disabled:opacity-50"
                 >
                   <Minus className="w-4 h-4" /> Deduct Credits
                 </button>
@@ -468,7 +510,6 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── Ledger Tab ─── */}
       {activeTab === "ledger" && (
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
           <h2 className="text-lg font-serif font-bold text-heading mb-4">
@@ -481,24 +522,12 @@ export default function CompanyDetailPage() {
               <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left pb-3 text-muted font-medium">
-                      User
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Action
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Amount
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Balance
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Reason
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Timestamp
-                    </th>
+                    <th className="text-left pb-3 text-muted font-medium">User</th>
+                    <th className="text-left pb-3 text-muted font-medium">Action</th>
+                    <th className="text-left pb-3 text-muted font-medium">Amount</th>
+                    <th className="text-left pb-3 text-muted font-medium">Balance</th>
+                    <th className="text-left pb-3 text-muted font-medium">Reason</th>
+                    <th className="text-left pb-3 text-muted font-medium">Timestamp</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -531,7 +560,7 @@ export default function CompanyDetailPage() {
                         {entry.reason}
                       </td>
                       <td className="py-3 text-muted text-xs">
-                        {new Date(entry.timestamp).toLocaleString()}
+                        {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -542,7 +571,6 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── HR Admins Tab ─── */}
       {activeTab === "hr-admins" && (
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
           <h2 className="text-lg font-serif font-bold text-heading mb-4">
@@ -557,18 +585,10 @@ export default function CompanyDetailPage() {
               <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Name
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Email
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Status
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Last Active
-                    </th>
+                    <th className="text-left pb-3 text-muted font-medium">Name</th>
+                    <th className="text-left pb-3 text-muted font-medium">Email</th>
+                    <th className="text-left pb-3 text-muted font-medium">Status</th>
+                    <th className="text-left pb-3 text-muted font-medium">Last Active</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -601,7 +621,7 @@ export default function CompanyDetailPage() {
                         </span>
                       </td>
                       <td className="py-3 text-muted text-xs">
-                        {new Date(admin.lastActivity).toLocaleDateString()}
+                        {admin.lastActivity ? new Date(admin.lastActivity).toLocaleDateString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -612,13 +632,12 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── Employees Tab ─── */}
       {activeTab === "employees" && (
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
           <h2 className="text-lg font-serif font-bold text-heading mb-4">
-            Employees ({companyUsers.length})
+            Employees ({employees.length})
           </h2>
-          {companyUsers.length === 0 ? (
+          {employees.length === 0 ? (
             <p className="text-sm text-muted">
               No employees found for this company.
             </p>
@@ -627,25 +646,15 @@ export default function CompanyDetailPage() {
               <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Name
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Email
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Role
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Credits Used
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Status
-                    </th>
+                    <th className="text-left pb-3 text-muted font-medium">Name</th>
+                    <th className="text-left pb-3 text-muted font-medium">Email</th>
+                    <th className="text-left pb-3 text-muted font-medium">Role</th>
+                    <th className="text-left pb-3 text-muted font-medium">Credits Used</th>
+                    <th className="text-left pb-3 text-muted font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {companyUsers.map((u) => (
+                  {employees.map((u) => (
                     <tr
                       key={u.id}
                       className="border-b border-border-light hover:bg-background-primary transition-colors duration-150"
@@ -662,19 +671,19 @@ export default function CompanyDetailPage() {
                         {u.email}
                       </td>
                       <td className="py-3 pr-3 text-body text-xs capitalize">
-                        {u.role.replace(/_/g, " ")}
+                        {(u as any).role?.replace(/_/g, " ") ?? "employee"}
                       </td>
-                      <td className="py-3 pr-3 text-body">{u.creditsUsed}</td>
+                      <td className="py-3 pr-3 text-body">{(u as any).creditsUsed ?? 0}</td>
                       <td className="py-3">
                         <span
                           className={cn(
                             "px-2.5 py-0.5 rounded-xl text-xs font-medium capitalize",
-                            u.status === "active"
+                            (u as any).status === "active"
                               ? "bg-success/10 text-success"
                               : "bg-danger/10 text-danger"
                           )}
                         >
-                          {u.status}
+                          {(u as any).status ?? "active"}
                         </span>
                       </td>
                     </tr>
@@ -686,7 +695,6 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* ─── Plans Tab ─── */}
       {activeTab === "plans" && (
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
           <h2 className="text-lg font-serif font-bold text-heading mb-4">
@@ -701,21 +709,11 @@ export default function CompanyDetailPage() {
               <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left pb-3 text-muted font-medium">
-                      User
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Destination
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Risk Score
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Status
-                    </th>
-                    <th className="text-left pb-3 text-muted font-medium">
-                      Created
-                    </th>
+                    <th className="text-left pb-3 text-muted font-medium">User</th>
+                    <th className="text-left pb-3 text-muted font-medium">Destination</th>
+                    <th className="text-left pb-3 text-muted font-medium">Risk Score</th>
+                    <th className="text-left pb-3 text-muted font-medium">Status</th>
+                    <th className="text-left pb-3 text-muted font-medium">Created</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -759,7 +757,7 @@ export default function CompanyDetailPage() {
                         </span>
                       </td>
                       <td className="py-3 text-muted text-xs">
-                        {new Date(plan.createdAt).toLocaleDateString()}
+                        {plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : "—"}
                       </td>
                     </tr>
                   ))}
@@ -770,36 +768,39 @@ export default function CompanyDetailPage() {
         </div>
       )}
 
-      {/* Action Buttons — visible on all tabs */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
         <h3 className="text-sm font-semibold text-heading mb-4">Actions</h3>
         <div className="flex flex-wrap gap-2">
           {company.billingStatus === "frozen" ? (
             <button
-              onClick={() => unfreezeCompany(company.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150"
+              onClick={handleUnfreeze}
+              disabled={unfreezeMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-xl text-sm font-medium hover:bg-success/20 transition-colors duration-150 disabled:opacity-50"
             >
               <ShieldCheck className="w-4 h-4" /> Unfreeze Company
             </button>
           ) : (
             <button
-              onClick={() => freezeCompany(company.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150"
+              onClick={handleFreeze}
+              disabled={freezeMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-danger/10 text-danger rounded-xl text-sm font-medium hover:bg-danger/20 transition-colors duration-150 disabled:opacity-50"
             >
               <Snowflake className="w-4 h-4" /> Freeze Company
             </button>
           )}
           {company.tier !== "enterprise" && (
             <button
-              onClick={() => upgradeTier(company.id)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors duration-150"
+              onClick={handleUpgrade}
+              disabled={upgradeMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors duration-150 disabled:opacity-50"
             >
               <TrendingUp className="w-4 h-4" /> Upgrade to Enterprise
             </button>
           )}
           <button
-            onClick={() => addCompanyCredits(company.id, 50)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-xl text-sm font-medium hover:bg-accent/20 transition-colors duration-150"
+            onClick={() => handleAddCredits(50)}
+            disabled={addCreditsMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 text-accent rounded-xl text-sm font-medium hover:bg-accent/20 transition-colors duration-150 disabled:opacity-50"
           >
             <CreditCard className="w-4 h-4" /> Add 50 Credits
           </button>

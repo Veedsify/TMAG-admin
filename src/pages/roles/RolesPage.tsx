@@ -1,16 +1,33 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Shield, Users, X } from "lucide-react";
+import { Shield, Users, X, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useRoles, useAdminUsers } from "../../api/hooks";
+import type { AdminRole, AdminUser } from "../../api/types";
 
 export default function RolesPage() {
-  const { roles, adminUsers } = useAdminDataStore();
+  const { data: rolesData, isLoading: rolesLoading } = useRoles();
+  const { data: adminUsersData, isLoading: usersLoading } = useAdminUsers();
+
+  const roles: AdminRole[] = rolesData ?? [];
+  const adminUsers: AdminUser[] = adminUsersData ?? [];
+  const isLoading = rolesLoading || usersLoading;
+
   const { roleId } = useParams();
   const [selected, setSelected] = useState<string | null>(roleId ?? null);
 
   const detail = selected ? roles.find((r) => r.id === selected) : null;
-  const roleUsers = detail ? adminUsers.filter((u) => u.role === detail.name.toLowerCase().replace(/ /g, "_")) : [];
+  const roleUsers = detail 
+    ? adminUsers.filter((u) => u.role === detail.name.toLowerCase().replace(/ /g, "_")) 
+    : [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 lg:space-y-10">
@@ -19,7 +36,6 @@ export default function RolesPage() {
         <p className="text-sm text-muted mt-0.5">Manage roles and permissions for admin users</p>
       </div>
 
-      {/* Role cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {roles.map((role) => (
           <button
@@ -54,7 +70,6 @@ export default function RolesPage() {
         ))}
       </div>
 
-      {/* Expanded detail modal */}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-white rounded-2xl border border-border-light/50 w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>

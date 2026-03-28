@@ -1,24 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, RotateCcw, Shield, UserCog, HeadphonesIcon } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useSystemSettings, useUpdateSystemSettings } from "../../api/hooks";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
+import type { SystemSettings } from "../../api/types";
+
+const defaultSettings: SystemSettings = {
+  defaultIndividualCredits: 0,
+  defaultCorporateCredits: 0,
+  aiModelVersion: "gpt-4o-mini",
+  planGenerationLimit: 10,
+  globalDisclaimer: "",
+  maintenanceMode: false,
+  emailNotifications: true,
+  maxEmployeesPerCompany: 100,
+};
 
 export default function SettingsPage() {
-  const { settings, updateSettings } = useAdminDataStore();
+  const { data: settings, isLoading } = useSystemSettings();
+  const updateSettingsMutation = useUpdateSystemSettings();
   const admin = useAdminAuthStore((s) => s.admin);
-  const [form, setForm] = useState({ ...settings });
+  const currentSettings = settings ?? defaultSettings;
+  const [form, setForm] = useState<SystemSettings>(currentSettings);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    if (settings) setForm({ ...settings });
+  }, [settings]);
+
   const handleSave = () => {
-    updateSettings(form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    updateSettingsMutation.mutate(form, {
+      onSuccess: () => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      },
+    });
   };
 
   const handleReset = () => {
-    setForm({ ...settings });
+    setForm({ ...currentSettings });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const roleConfig = [
     { role: "super_admin", label: "Super Admin", icon: Shield, desc: "Full system access. Can manage everything.", color: "text-danger" },

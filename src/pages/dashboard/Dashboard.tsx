@@ -12,6 +12,7 @@ import {
     FileWarning,
     ServerCrash,
     UserCheck,
+    LucideLoader2,
 } from "lucide-react";
 import {
     BarChart as RechartsBarChart,
@@ -26,9 +27,8 @@ import {
     Legend,
 } from "recharts";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
-
-/* ─── Stat Card ─────────────────────────────────────────────── */
+import { useDashboardStats, useAnalytics, useAILogs, useAbuseFlags, useGeneratedPlans, useSystemLogs } from "../../api/hooks";
+import type { DashboardStats, AnalyticsData, AIRequestLog, GeneratedPlan, SystemLog, AbuseFlag } from "../../api/types";
 
 function StatCard({
     label,
@@ -66,8 +66,6 @@ function StatCard({
         </div>
     );
 }
-
-/* ─── System Health Badge ──────────────────────────────────── */
 
 function SystemHealthBadge({ status }: { status: string }) {
     const config: Record<
@@ -108,8 +106,6 @@ function SystemHealthBadge({ status }: { status: string }) {
     );
 }
 
-/* ─── Recharts Tooltip ─────────────────────────────────────── */
-
 const chartTooltipStyle: React.CSSProperties = {
     borderRadius: 12,
     border: "1px solid #e8ddd3",
@@ -118,17 +114,47 @@ const chartTooltipStyle: React.CSSProperties = {
     fontFamily: "Geist, system-ui, sans-serif",
 };
 
-/* ─── Dashboard ────────────────────────────────────────────── */
-
 export default function Dashboard() {
-    const { stats, analytics, aiLogs, abuseFlags, plans, systemLogs } =
-        useAdminDataStore();
+    const { data: statsData, isLoading: statsLoading } = useDashboardStats();
+    const { data: analyticsData, isLoading: analyticsLoading } = useAnalytics();
+    const { data: aiLogsData, isLoading: aiLogsLoading } = useAILogs();
+    const { data: abuseFlagsData, isLoading: abuseLoading } = useAbuseFlags();
+    const { data: plansData, isLoading: plansLoading } = useGeneratedPlans();
+    const { data: systemLogsData, isLoading: logsLoading } = useSystemLogs();
+
+    const stats: DashboardStats = statsData ?? {
+        totalUsers: 0,
+        totalCompanies: 0,
+        totalCreditsIssued: 0,
+        totalCreditsConsumed: 0,
+        aiRequestsToday: 0,
+        revenueOverview: 0,
+        failedAICalls: 0,
+        systemHealthStatus: "healthy",
+        activeUsersToday: 0,
+        newUsersThisWeek: 0,
+    };
+
+    const analytics: AnalyticsData = analyticsData ?? {
+        topDestinations: [],
+        avgCreditsPerUser: 0,
+        corporateVsIndividual: { corporate: 0, individual: 0 },
+        peakUsageTimes: [],
+        monthlyRequests: [],
+        dailyActiveUsers: [],
+        creditUsageByType: [],
+    };
+
+    const aiLogs: AIRequestLog[] = aiLogsData ?? [];
+    const abuseFlags: AbuseFlag[] = abuseFlagsData ?? [];
+    const plans: GeneratedPlan[] = plansData ?? [];
+    const systemLogs: SystemLog[] = systemLogsData ?? [];
+
+    const isLoading = statsLoading || analyticsLoading || aiLogsLoading || abuseLoading || plansLoading || logsLoading;
 
     const recentRequests = aiLogs.slice(0, 5);
     const unresolvedAbuseCount = abuseFlags.filter((f) => !f.resolved).length;
-    const flaggedPlansCount = plans.filter(
-        (p) => p.status === "flagged",
-    ).length;
+    const flaggedPlansCount = plans.filter((p) => p.status === "flagged").length;
     const recentWarnings = systemLogs
         .filter(
             (l) =>
@@ -138,9 +164,16 @@ export default function Dashboard() {
         )
         .slice(0, 4);
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8 lg:space-y-10">
-            {/* ── Page Header ─────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl lg:text-3xl font-serif font-bold text-heading">
@@ -153,7 +186,6 @@ export default function Dashboard() {
                 <SystemHealthBadge status={stats.systemHealthStatus} />
             </div>
 
-            {/* ── Stats Grid ──────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 <StatCard
                     label="Total Users"
@@ -211,9 +243,7 @@ export default function Dashboard() {
                 />
             </div>
 
-            {/* ── Charts Row ──────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Monthly Requests & Revenue */}
                 <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                     <h3 className="text-sm font-serif font-bold text-heading mb-5 flex items-center gap-2">
                         <TrendingUp className="w-4 h-4 text-accent" />
@@ -269,7 +299,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Top Destinations */}
                 <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                     <h3 className="text-sm font-serif font-bold text-heading mb-5 flex items-center gap-2">
                         <Globe className="w-4 h-4 text-accent" />
@@ -314,7 +343,6 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* ── Recent AI Requests Table ────────────────────────── */}
             <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                 <h3 className="text-sm font-serif font-bold text-heading mb-5 flex items-center gap-2">
                     <Activity className="w-4 h-4 text-accent" />
@@ -390,18 +418,23 @@ export default function Dashboard() {
                                     </td>
                                 </tr>
                             ))}
+                            {recentRequests.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="py-8 text-center text-muted text-sm">
+                                        No recent AI requests
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* ── Quick Glance ────────────────────────────────────── */}
             <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                 <h3 className="text-sm font-serif font-bold text-heading mb-5">
                     Quick Glance
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Unresolved Abuse Flags */}
                     <div className="bg-background-primary rounded-xl p-4 flex items-start gap-4">
                         <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
                             <ShieldAlert className="w-4.5 h-4.5 text-danger" />
@@ -416,7 +449,6 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Flagged Plans */}
                     <div className="bg-background-primary rounded-xl p-4 flex items-start gap-4">
                         <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
                             <FileWarning className="w-4.5 h-4.5 text-warning" />
@@ -431,7 +463,6 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Recent System Warnings */}
                     <div className="bg-background-primary rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2.5">
                             <ServerCrash className="w-4 h-4 text-warning" />

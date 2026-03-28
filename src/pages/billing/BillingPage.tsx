@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, DollarSign, Clock, AlertTriangle, RotateCcw, Eye, X, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { adminApi } from "../../api/api";
+import { useInvoices } from "../../api/hooks";
 import type { Invoice } from "../../api/types";
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -26,10 +25,8 @@ export default function BillingPage() {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
     const [selected, setSelected] = useState<string | null>(null);
 
-    const { data: invoices = [], isLoading } = useQuery({
-        queryKey: ["admin", "billing", "invoices"],
-        queryFn: () => adminApi.getInvoices() as Promise<Invoice[]>,
-    });
+    const { data: invoicesData, isLoading } = useInvoices();
+    const invoices: Invoice[] = invoicesData ?? [];
 
     useEffect(() => {
         if (invoiceId) setSelected(invoiceId);

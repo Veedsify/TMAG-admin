@@ -4,74 +4,58 @@ import { getAuthCookie } from "./axios";
 import type { LoginRequest, CreditAdjustment } from "./types";
 
 export const queryKeys = {
-  // Auth
   currentUser: ["admin", "currentUser"] as const,
   
-  // Dashboard
-  dashboardStats: ["admin", "dashboard", "stats"] as const,
+  dashboard: ["admin", "dashboard", "stats"] as const,
   
-  // Users - Use in: UsersPage, UserDetailPage
   users: ["admin", "users"] as const,
   user: (id: string) => ["admin", "users", id] as const,
   
-  // Companies - Use in: CompaniesPage, CompanyDetailPage
   companies: ["admin", "companies"] as const,
   company: (id: string) => ["admin", "companies", id] as const,
   companyEmployees: (id: string) => ["admin", "companies", id, "employees"] as const,
   
-  // Credit Ledger - Use in: CreditsPage, UserDetailPage, CompanyDetailPage
   creditLedger: (params?: { userId?: string; companyId?: string }) => 
     ["admin", "ledger", params] as const,
   
-  // Billing - Use in: BillingPage
   invoices: ["admin", "billing", "invoices"] as const,
   invoice: (id: string) => ["admin", "billing", "invoices", id] as const,
   
-  // AI Logs - Use in: AILogsPage
   aiLogs: (params?: { userId?: string; status?: string }) => 
     ["admin", "ai-logs", params] as const,
   aiLog: (id: string) => ["admin", "ai-logs", id] as const,
   
-  // Plans - Use in: PlansPage, UserDetailPage, CompanyDetailPage
   generatedPlans: (params?: { userId?: string; companyId?: string }) => 
     ["admin", "plans", params] as const,
   generatedPlan: (id: string) => ["admin", "plans", id] as const,
   
-  // Analytics - Use in: AnalyticsPage
   analytics: ["admin", "analytics"] as const,
   
-  // System Status - Use in: SystemStatusPage
   systemStatus: ["admin", "system", "status"] as const,
   
-  // System Logs - Use in: SystemLogsPage
   systemLogs: (params?: { level?: string; limit?: number }) => 
     ["admin", "system", "logs", params] as const,
   
-  // System Settings - Use in: SystemSettingsPage, SettingsPage
   systemSettings: ["admin", "system", "settings"] as const,
   
-  // Roles - Use in: RolesPage
   roles: ["admin", "roles"] as const,
   role: (id: string) => ["admin", "roles", id] as const,
   
-  // Admin Users - Use in: AdminUsersPage
   adminUsers: ["admin", "admin-users"] as const,
   adminUser: (id: string) => ["admin", "admin-users", id] as const,
   
-  // Abuse Flags - Use in: AbusePage
   abuseFlags: (params?: { resolved?: boolean }) => 
     ["admin", "abuse", params] as const,
 
-  // Company Credit Purchase - Use in: CreditsPage
   companyPricing: (companyId: string) =>
     ["admin", "company-credits", "pricing", companyId] as const,
   companyCreditHistory: (companyId?: string) =>
     ["admin", "company-credits", "history", companyId] as const,
 };
 
-// ============================================================================
-// AUTH HOOKS - Use in: LoginPage, AdminLayout
-// ============================================================================
+const extractData = <T>(response: { data: { data: T } }): T => {
+  return response.data.data;
+};
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -97,37 +81,29 @@ export const useCurrentUser = () => {
   return useQuery({
     queryKey: queryKeys.currentUser,
     queryFn: async () => {
-      const { data } = await adminApi.getCurrentUser();
-      return data.data;
+      const response = await adminApi.getCurrentUser();
+      return response.data.data;
     },
     enabled: !!getAuthCookie(),
   });
 };
 
-// ============================================================================
-// DASHBOARD HOOKS - Use in: Dashboard
-// ============================================================================
-
 export const useDashboardStats = () => {
   return useQuery({
-    queryKey: queryKeys.dashboardStats,
+    queryKey: queryKeys.dashboard,
     queryFn: async () => {
-      const { data } = await adminApi.getDashboardStats();
-      return data;
+      const response = await adminApi.getDashboardStats();
+      return extractData(response);
     },
   });
 };
-
-// ============================================================================
-// USER HOOKS - Use in: UsersPage, UserDetailPage
-// ============================================================================
 
 export const useUsers = () => {
   return useQuery({
     queryKey: queryKeys.users,
     queryFn: async () => {
-      const { data } = await adminApi.getUsers();
-      return data;
+      const response = await adminApi.getUsers();
+      return extractData(response);
     },
   });
 };
@@ -136,8 +112,8 @@ export const useUser = (id: string) => {
   return useQuery({
     queryKey: queryKeys.user(id),
     queryFn: async () => {
-      const { data } = await adminApi.getUser(id);
-      return data;
+      const response = await adminApi.getUser(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -211,16 +187,12 @@ export const useResetUserPassword = () => {
   });
 };
 
-// ============================================================================
-// COMPANY HOOKS - Use in: CompaniesPage, CompanyDetailPage
-// ============================================================================
-
 export const useCompanies = () => {
   return useQuery({
     queryKey: queryKeys.companies,
     queryFn: async () => {
-      const { data } = await adminApi.getCompanies();
-      return data;
+      const response = await adminApi.getCompanies();
+      return extractData(response);
     },
   });
 };
@@ -229,8 +201,8 @@ export const useCompany = (id: string) => {
   return useQuery({
     queryKey: queryKeys.company(id),
     queryFn: async () => {
-      const { data } = await adminApi.getCompany(id);
-      return data;
+      const response = await adminApi.getCompany(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -240,8 +212,8 @@ export const useCompanyEmployees = (id: string) => {
   return useQuery({
     queryKey: queryKeys.companyEmployees(id),
     queryFn: async () => {
-      const { data } = await adminApi.getCompanyEmployees(id);
-      return data;
+      const response = await adminApi.getCompanyEmployees(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -319,16 +291,12 @@ export const useUpgradeTier = () => {
   });
 };
 
-// ============================================================================
-// CREDIT LEDGER HOOKS - Use in: CreditsPage, UserDetailPage, CompanyDetailPage
-// ============================================================================
-
 export const useCreditLedger = (params?: { userId?: string; companyId?: string }) => {
   return useQuery({
     queryKey: queryKeys.creditLedger(params),
     queryFn: async () => {
-      const { data } = await adminApi.getCreditLedger(params);
-      return data;
+      const response = await adminApi.getCreditLedger(params);
+      return extractData(response);
     },
   });
 };
@@ -345,21 +313,23 @@ export const useAdjustCredits = () => {
   });
 };
 
-// ============================================================================
-// BILLING HOOKS - Use in: BillingPage
-// ============================================================================
-
 export const useInvoices = () => {
   return useQuery({
     queryKey: queryKeys.invoices,
-    queryFn: () => adminApi.getInvoices() as Promise<any>,
+    queryFn: async () => {
+      const response = await adminApi.getInvoices();
+      return extractData(response);
+    },
   });
 };
 
 export const useInvoice = (id: string) => {
   return useQuery({
     queryKey: queryKeys.invoice(id),
-    queryFn: () => adminApi.getInvoice(id) as Promise<any>,
+    queryFn: async () => {
+      const response = await adminApi.getInvoice(id);
+      return extractData(response);
+    },
     enabled: !!id,
   });
 };
@@ -394,16 +364,12 @@ export const useMarkInvoicePaid = () => {
   });
 };
 
-// ============================================================================
-// AI LOGS HOOKS - Use in: AILogsPage
-// ============================================================================
-
 export const useAILogs = (params?: { userId?: string; status?: string }) => {
   return useQuery({
     queryKey: queryKeys.aiLogs(params),
     queryFn: async () => {
-      const { data } = await adminApi.getAILogs(params);
-      return data;
+      const response = await adminApi.getAILogs(params);
+      return extractData(response);
     },
   });
 };
@@ -412,8 +378,8 @@ export const useAILog = (id: string) => {
   return useQuery({
     queryKey: queryKeys.aiLog(id),
     queryFn: async () => {
-      const { data } = await adminApi.getAILog(id);
-      return data;
+      const response = await adminApi.getAILog(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -429,16 +395,12 @@ export const useFlagAILog = () => {
   });
 };
 
-// ============================================================================
-// PLANS HOOKS - Use in: PlansPage, UserDetailPage, CompanyDetailPage
-// ============================================================================
-
 export const useGeneratedPlans = (params?: { userId?: string; companyId?: string }) => {
   return useQuery({
     queryKey: queryKeys.generatedPlans(params),
     queryFn: async () => {
-      const { data } = await adminApi.getGeneratedPlans(params);
-      return data;
+      const response = await adminApi.getGeneratedPlans(params);
+      return extractData(response);
     },
   });
 };
@@ -447,8 +409,8 @@ export const useGeneratedPlan = (id: string) => {
   return useQuery({
     queryKey: queryKeys.generatedPlan(id),
     queryFn: async () => {
-      const { data } = await adminApi.getGeneratedPlan(id);
-      return data;
+      const response = await adminApi.getGeneratedPlan(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -484,59 +446,43 @@ export const useFlagPlan = () => {
   });
 };
 
-// ============================================================================
-// ANALYTICS HOOKS - Use in: AnalyticsPage
-// ============================================================================
-
 export const useAnalytics = () => {
   return useQuery({
     queryKey: queryKeys.analytics,
     queryFn: async () => {
-      const { data } = await adminApi.getAnalytics();
-      return data;
+      const response = await adminApi.getAnalytics();
+      return extractData(response);
     },
   });
 };
-
-// ============================================================================
-// SYSTEM STATUS HOOKS - Use in: SystemStatusPage
-// ============================================================================
 
 export const useSystemStatus = () => {
   return useQuery({
     queryKey: queryKeys.systemStatus,
     queryFn: async () => {
-      const { data } = await adminApi.getSystemStatus();
-      return data;
+      const response = await adminApi.getSystemStatus();
+      return extractData(response);
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 };
-
-// ============================================================================
-// SYSTEM LOGS HOOKS - Use in: SystemLogsPage
-// ============================================================================
 
 export const useSystemLogs = (params?: { level?: string; limit?: number }) => {
   return useQuery({
     queryKey: queryKeys.systemLogs(params),
     queryFn: async () => {
-      const { data } = await adminApi.getSystemLogs(params);
-      return data;
+      const response = await adminApi.getSystemLogs(params);
+      return extractData(response);
     },
   });
 };
-
-// ============================================================================
-// SYSTEM SETTINGS HOOKS - Use in: SystemSettingsPage, SettingsPage
-// ============================================================================
 
 export const useSystemSettings = () => {
   return useQuery({
     queryKey: queryKeys.systemSettings,
     queryFn: async () => {
-      const { data } = await adminApi.getSystemSettings();
-      return data;
+      const response = await adminApi.getSystemSettings();
+      return extractData(response);
     },
   });
 };
@@ -562,16 +508,12 @@ export const useToggleMaintenanceMode = () => {
   });
 };
 
-// ============================================================================
-// ROLES HOOKS - Use in: RolesPage
-// ============================================================================
-
 export const useRoles = () => {
   return useQuery({
     queryKey: queryKeys.roles,
     queryFn: async () => {
-      const { data } = await adminApi.getRoles();
-      return data;
+      const response = await adminApi.getRoles();
+      return extractData(response);
     },
   });
 };
@@ -580,8 +522,8 @@ export const useRole = (id: string) => {
   return useQuery({
     queryKey: queryKeys.role(id),
     queryFn: async () => {
-      const { data } = await adminApi.getRole(id);
-      return data;
+      const response = await adminApi.getRole(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -617,16 +559,12 @@ export const useDeleteRole = () => {
   });
 };
 
-// ============================================================================
-// ADMIN USERS HOOKS - Use in: AdminUsersPage
-// ============================================================================
-
 export const useAdminUsers = () => {
   return useQuery({
     queryKey: queryKeys.adminUsers,
     queryFn: async () => {
-      const { data } = await adminApi.getAdminUsers();
-      return data;
+      const response = await adminApi.getAdminUsers();
+      return extractData(response);
     },
   });
 };
@@ -635,8 +573,8 @@ export const useAdminUser = (id: string) => {
   return useQuery({
     queryKey: queryKeys.adminUser(id),
     queryFn: async () => {
-      const { data } = await adminApi.getAdminUser(id);
-      return data;
+      const response = await adminApi.getAdminUser(id);
+      return extractData(response);
     },
     enabled: !!id,
   });
@@ -672,16 +610,12 @@ export const useDeleteAdminUser = () => {
   });
 };
 
-// ============================================================================
-// ABUSE FLAGS HOOKS - Use in: AbusePage
-// ============================================================================
-
 export const useAbuseFlags = (params?: { resolved?: boolean }) => {
   return useQuery({
     queryKey: queryKeys.abuseFlags(params),
     queryFn: async () => {
-      const { data } = await adminApi.getAbuseFlags(params);
-      return data;
+      const response = await adminApi.getAbuseFlags(params);
+      return extractData(response);
     },
   });
 };
@@ -696,16 +630,12 @@ export const useResolveAbuseFlag = () => {
   });
 };
 
-// ============================================================================
-// COMPANY CREDIT PURCHASE HOOKS - Use in: CreditsPage
-// ============================================================================
-
 export const useCompanyPricing = (companyId: string) => {
   return useQuery({
     queryKey: queryKeys.companyPricing(companyId),
     queryFn: async () => {
-      const { data } = await adminApi.getCompanyPricing(companyId);
-      return data.data;
+      const response = await adminApi.getCompanyPricing(companyId);
+      return response.data.data;
     },
     enabled: !!companyId,
   });
@@ -742,8 +672,8 @@ export const useCompanyCreditHistory = (companyId?: string) => {
   return useQuery({
     queryKey: queryKeys.companyCreditHistory(companyId),
     queryFn: async () => {
-      const { data } = await adminApi.getCompanyCreditHistory(companyId);
-      return data.data;
+      const response = await adminApi.getCompanyCreditHistory(companyId);
+      return response.data.data;
     },
   });
 };

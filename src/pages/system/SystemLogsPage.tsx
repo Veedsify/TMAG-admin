@@ -7,9 +7,11 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  LucideLoader2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useSystemLogs } from "../../api/hooks";
+import type { SystemLog } from "../../api/types";
 
 type LogLevel = "all" | "info" | "warning" | "error" | "critical";
 
@@ -50,7 +52,9 @@ function levelBorderColor(level: string) {
 }
 
 export default function SystemLogsPage() {
-  const { systemLogs } = useAdminDataStore();
+  const { data: logsData, isLoading } = useSystemLogs();
+  const systemLogs: SystemLog[] = logsData ?? [];
+
   const [activeLevel, setActiveLevel] = useState<LogLevel>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -77,17 +81,22 @@ export default function SystemLogsPage() {
       second: "2-digit",
     });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-xl lg:text-2xl font-serif font-bold text-heading">System Logs</h1>
         <p className="text-sm text-muted">View and filter platform event logs</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        {/* Level tabs */}
         <div className="flex items-center gap-1 bg-background-secondary rounded-xl p-1">
           {LEVEL_TABS.map((tab) => (
             <button
@@ -105,7 +114,6 @@ export default function SystemLogsPage() {
           ))}
         </div>
 
-        {/* Search */}
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
@@ -122,7 +130,6 @@ export default function SystemLogsPage() {
         </span>
       </div>
 
-      {/* Log entries */}
       {filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-border-light/50 p-8 text-center">
           <p className="text-sm text-muted">No logs match your filters.</p>
@@ -147,7 +154,7 @@ export default function SystemLogsPage() {
                       <span className="text-xs text-brand-muted font-medium">{log.source}</span>
                       <span className="text-xs text-muted ml-auto flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {fmtDate(log.timestamp)}
+                        {log.timestamp ? fmtDate(log.timestamp) : "—"}
                       </span>
                     </div>
                     <p className="text-sm text-heading mt-1">{log.message}</p>

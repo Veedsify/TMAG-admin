@@ -4,9 +4,10 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, CartesianGrid, LineChart, Line, Legend,
 } from "recharts";
-import { BarChart3, Users, Globe, CreditCard, DollarSign } from "lucide-react";
+import { BarChart3, Users, Globe, CreditCard, DollarSign, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useAnalytics, useDashboardStats, useInvoices } from "../../api/hooks";
+import type { AnalyticsData, DashboardStats, Invoice } from "../../api/types";
 
 type TabKey = "overview" | "usage" | "destinations" | "credits" | "revenue";
 
@@ -28,10 +29,39 @@ const tooltipStyle: React.CSSProperties = {
 };
 
 export default function AnalyticsPage() {
-  const { analytics, stats, invoices } = useAdminDataStore();
+  const { data: analyticsData, isLoading: analyticsLoading } = useAnalytics();
+  const { data: statsData, isLoading: statsLoading } = useDashboardStats();
+  const { data: invoicesData, isLoading: invoicesLoading } = useInvoices();
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedRevTab, setSelectedRevTab] = useState<"monthly" | "plan" | "method">("monthly");
+
+  const analytics: AnalyticsData = analyticsData ?? {
+    topDestinations: [],
+    avgCreditsPerUser: 0,
+    corporateVsIndividual: { corporate: 0, individual: 0 },
+    peakUsageTimes: [],
+    monthlyRequests: [],
+    dailyActiveUsers: [],
+    creditUsageByType: [],
+  };
+
+  const stats: DashboardStats = statsData ?? {
+    totalUsers: 0,
+    totalCompanies: 0,
+    totalCreditsIssued: 0,
+    totalCreditsConsumed: 0,
+    aiRequestsToday: 0,
+    revenueOverview: 0,
+    failedAICalls: 0,
+    systemHealthStatus: "healthy",
+    activeUsersToday: 0,
+    newUsersThisWeek: 0,
+  };
+
+  const invoices: Invoice[] = invoicesData ?? [];
+
+  const isLoading = analyticsLoading || statsLoading || invoicesLoading;
 
   const activeTab: TabKey = (() => {
     const p = location.pathname;
@@ -43,8 +73,8 @@ export default function AnalyticsPage() {
   })();
 
   const pieData = [
-    { name: "Corporate", value: analytics.corporateVsIndividual.corporate },
-    { name: "Individual", value: analytics.corporateVsIndividual.individual },
+    { name: "Corporate", value: analytics.corporateVsIndividual?.corporate ?? 0 },
+    { name: "Individual", value: analytics.corporateVsIndividual?.individual ?? 0 },
   ];
 
   const modelData = [
@@ -74,6 +104,14 @@ export default function AnalyticsPage() {
   }, {});
   const planTypeData = Object.entries(planTypeRevenue).map(([name, value]) => ({ name, value }));
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 lg:space-y-10">
       <div>
@@ -81,7 +119,6 @@ export default function AnalyticsPage() {
         <p className="text-sm text-muted mt-0.5">Usage patterns, trends, and platform insights</p>
       </div>
 
-      {/* Tab navigation */}
       <div className="flex items-center gap-2 overflow-x-auto">
         {TABS.map((tab) => (
           <button
@@ -98,15 +135,14 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Overview */}
       {activeTab === "overview" && (
         <div className="space-y-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {[
-              { label: "Avg Credits/User", value: analytics.avgCreditsPerUser.toFixed(1), icon: CreditCard, color: "text-accent", bg: "bg-accent/10" },
+              { label: "Avg Credits/User", value: analytics.avgCreditsPerUser?.toFixed(1) ?? "0.0", icon: CreditCard, color: "text-accent", bg: "bg-accent/10" },
               { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-gold", bg: "bg-gold/10" },
-              { label: "Corporate Credits", value: analytics.corporateVsIndividual.corporate, icon: BarChart3, color: "text-info", bg: "bg-info/10" },
-              { label: "Individual Credits", value: analytics.corporateVsIndividual.individual, icon: DollarSign, color: "text-warning", bg: "bg-warning/10" },
+              { label: "Corporate Credits", value: analytics.corporateVsIndividual?.corporate ?? 0, icon: BarChart3, color: "text-info", bg: "bg-info/10" },
+              { label: "Individual Credits", value: analytics.corporateVsIndividual?.individual ?? 0, icon: DollarSign, color: "text-warning", bg: "bg-warning/10" },
             ].map((s) => (
               <div key={s.label} className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                 <div className="flex items-center gap-3.5">
@@ -161,7 +197,6 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Usage */}
       {activeTab === "usage" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
@@ -209,14 +244,13 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Destinations */}
       {activeTab === "destinations" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h3 className="text-sm font-serif font-bold text-heading mb-5">Top Destinations</h3>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.topDestinations.slice(0, 8)} layout="vertical" margin={{ left: 4, right: 16 }}>
+                <BarChart data={analytics.topDestinations?.slice(0, 8) ?? []} layout="vertical" margin={{ left: 4, right: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8ddd3" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} width={72} />
@@ -256,14 +290,13 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Credits */}
       {activeTab === "credits" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
             <h3 className="text-sm font-serif font-bold text-heading mb-5">Credit Usage by Type</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analytics.creditUsageByType}>
+                <BarChart data={analytics.creditUsageByType ?? []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8ddd3" />
                   <XAxis dataKey="type" tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
@@ -279,7 +312,7 @@ export default function AnalyticsPage() {
             <h3 className="text-sm font-serif font-bold text-heading mb-5">Credit Consumption Trend</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analytics.monthlyRequests}>
+                <LineChart data={analytics.monthlyRequests ?? []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e8ddd3" />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
@@ -292,7 +325,6 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      {/* Revenue */}
       {activeTab === "revenue" && (
         <div className="space-y-8">
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
@@ -329,7 +361,7 @@ export default function AnalyticsPage() {
                 <h3 className="text-sm font-serif font-bold text-heading mb-5">Monthly Revenue</h3>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={analytics.monthlyRequests}>
+                    <AreaChart data={analytics.monthlyRequests ?? []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e8ddd3" />
                       <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />

@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Search, Filter, Eye, Flag, Archive, Trash2, X, FileText, ShieldAlert, AlertTriangle, CheckCircle } from "lucide-react";
+import { Search, Filter, Eye, Flag, Archive, Trash2, X, FileText, ShieldAlert, AlertTriangle, CheckCircle, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useGeneratedPlans, useFlagPlan, useArchivePlan, useDeletePlan } from "../../api/hooks";
+import type { GeneratedPlan } from "../../api/types";
 
 export default function PlansPage() {
-  const { plans, flagPlan, archivePlan, deletePlan } = useAdminDataStore();
+  const { data: plansData, isLoading } = useGeneratedPlans();
+  const flagMutation = useFlagPlan();
+  const archiveMutation = useArchivePlan();
+  const deleteMutation = useDeletePlan();
+
+  const plans: GeneratedPlan[] = (plansData ?? []).filter((p: GeneratedPlan) => p.status !== "deleted");
+
   const { planId } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -16,8 +23,7 @@ export default function PlansPage() {
     if (planId) setSelected(planId);
   }, [planId]);
 
-  const visible = plans.filter((p) => p.status !== "deleted");
-  const filtered = visible.filter((p) => {
+  const filtered = plans.filter((p) => {
     const matchSearch =
       p.userName.toLowerCase().includes(search.toLowerCase()) ||
       p.destination.toLowerCase().includes(search.toLowerCase());
@@ -40,6 +46,14 @@ export default function PlansPage() {
     { label: "High Risk", value: plans.filter((p) => p.riskScore >= 60).length, icon: ShieldAlert, color: "text-danger", bg: "bg-danger/10" },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 lg:space-y-10">
       <div>
@@ -47,7 +61,6 @@ export default function PlansPage() {
         <p className="text-sm text-muted mt-0.5">Review, flag, or manage AI-generated travel health plans</p>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         {summaryCards.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
@@ -64,7 +77,6 @@ export default function PlansPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -93,7 +105,6 @@ export default function PlansPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-border-light/50 overflow-x-auto">
         <table className="w-full text-sm min-w-[900px]">
           <thead>
@@ -124,7 +135,7 @@ export default function PlansPage() {
                     {plan.riskScore}%
                   </span>
                 </td>
-                <td className="p-4 text-body text-xs">{plan.vaccinations.length}</td>
+                <td className="p-4 text-body text-xs">{plan.vaccinations?.length ?? 0}</td>
                 <td className="p-4">
                   <span className={cn(
                     "px-2.5 py-0.5 rounded-xl text-xs font-medium capitalize",
@@ -135,34 +146,55 @@ export default function PlansPage() {
                     {plan.status}
                   </span>
                 </td>
-                <td className="p-4 text-muted text-xs">{plan.createdAt}</td>
+                <td className="p-4 text-muted text-xs">{plan.createdAt ? new Date(plan.createdAt).toLocaleDateString() : "—"}</td>
                 <td className="p-4">
                   <div className="flex items-center gap-1">
                     <button onClick={() => setSelected(plan.id)} className="p-1.5 rounded-xl hover:bg-background-secondary text-muted hover:text-heading" title="View">
                       <Eye className="w-3.5 h-3.5" />
                     </button>
                     {plan.status === "active" && (
-                      <button onClick={() => flagPlan(plan.id)} className="p-1.5 rounded-xl hover:bg-warning/10 text-muted hover:text-warning" title="Flag">
+                      <button 
+                        onClick={() => flagMutation.mutate(plan.id)} 
+                        disabled={flagMutation.isPending}
+                        className="p-1.5 rounded-xl hover:bg-warning/10 text-muted hover:text-warning disabled:opacity-50" 
+                        title="Flag"
+                      >
                         <Flag className="w-3.5 h-3.5" />
                       </button>
                     )}
                     {plan.status !== "archived" && (
-                      <button onClick={() => archivePlan(plan.id)} className="p-1.5 rounded-xl hover:bg-info/10 text-muted hover:text-info" title="Archive">
+                      <button 
+                        onClick={() => archiveMutation.mutate(plan.id)}
+                        disabled={archiveMutation.isPending}
+                        className="p-1.5 rounded-xl hover:bg-info/10 text-muted hover:text-info disabled:opacity-50" 
+                        title="Archive"
+                      >
                         <Archive className="w-3.5 h-3.5" />
                       </button>
                     )}
-                    <button onClick={() => deletePlan(plan.id)} className="p-1.5 rounded-xl hover:bg-danger/10 text-muted hover:text-danger" title="Delete">
+                    <button 
+                      onClick={() => deleteMutation.mutate(plan.id)}
+                      disabled={deleteMutation.isPending}
+                      className="p-1.5 rounded-xl hover:bg-danger/10 text-muted hover:text-danger disabled:opacity-50" 
+                      title="Delete"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={9} className="p-8 text-center text-muted text-sm">
+                  No plans found matching your filters.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Detail modal */}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={closeDetail}>
           <div className="bg-white rounded-2xl border border-border-light/50 w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
@@ -181,7 +213,7 @@ export default function PlansPage() {
                 ["Risk Score", `${detail.riskScore}%`],
                 ["Status", detail.status],
                 ["Credit Used", detail.creditUsed ? "Yes" : "No"],
-                ["Created", detail.createdAt],
+                ["Created", detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "—"],
               ] as const).map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-border-light/50 pb-2">
                   <span className="text-muted">{label}</span>
@@ -191,25 +223,31 @@ export default function PlansPage() {
               <div>
                 <p className="text-muted mb-2">Vaccinations</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {detail.vaccinations.map((v) => (
+                  {(detail.vaccinations ?? []).map((v) => (
                     <span key={v} className="px-2.5 py-1 rounded-xl text-xs font-medium bg-accent/10 text-accent">{v}</span>
                   ))}
+                  {(detail.vaccinations ?? []).length === 0 && (
+                    <span className="text-xs text-muted">None required</span>
+                  )}
                 </div>
               </div>
               <div>
                 <p className="text-muted mb-2">Health Alerts</p>
                 <div className="space-y-1.5">
-                  {detail.healthAlerts.map((a) => (
-                    <p key={a} className="text-body bg-warning/5 rounded-xl p-2 text-xs">{a}</p>
+                  {(detail.healthAlerts ?? []).map((a, i) => (
+                    <p key={i} className="text-body bg-warning/5 rounded-xl p-2 text-xs">{a}</p>
                   ))}
+                  {(detail.healthAlerts ?? []).length === 0 && (
+                    <span className="text-xs text-muted">None</span>
+                  )}
                 </div>
               </div>
-              {detail.safetyAdvisories.length > 0 && (
+              {(detail.safetyAdvisories ?? []).length > 0 && (
                 <div>
                   <p className="text-muted mb-2">Safety Advisories</p>
                   <div className="space-y-1.5">
-                    {detail.safetyAdvisories.map((a) => (
-                      <p key={a} className="text-body bg-danger/5 rounded-xl p-2 text-xs">{a}</p>
+                    {detail.safetyAdvisories.map((a, i) => (
+                      <p key={i} className="text-body bg-danger/5 rounded-xl p-2 text-xs">{a}</p>
                     ))}
                   </div>
                 </div>

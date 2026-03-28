@@ -1,29 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   RotateCcw,
   Shield,
   UserCog,
   HeadphonesIcon,
+  LucideLoader2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useSystemSettings, useUpdateSystemSettings, useToggleMaintenanceMode } from "../../api/hooks";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
 
+interface SystemSettingsData {
+  maintenanceMode: boolean;
+  defaultIndividualCredits: number;
+  defaultCorporateCredits: number;
+  aiModelVersion: string;
+  emailNotifications: boolean;
+  maxEmployeesPerCompany: number;
+  planGenerationLimit: number;
+  globalDisclaimer: string;
+}
+
+const defaultSettings: SystemSettingsData = {
+  maintenanceMode: false,
+  defaultIndividualCredits: 20,
+  defaultCorporateCredits: 100,
+  aiModelVersion: "gpt-4o-mini",
+  emailNotifications: true,
+  maxEmployeesPerCompany: 50,
+  planGenerationLimit: 10,
+  globalDisclaimer: "",
+};
+
 export default function SystemSettingsPage() {
-  const { settings, updateSettings } = useAdminDataStore();
+  const { data: settingsData, isLoading } = useSystemSettings();
+  const updateSettingsMutation = useUpdateSystemSettings();
+  const toggleMaintenanceMutation = useToggleMaintenanceMode();
+
   const admin = useAdminAuthStore((s) => s.admin);
-  const [form, setForm] = useState({ ...settings });
+  const [form, setForm] = useState<SystemSettingsData>(defaultSettings);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    if (settingsData) {
+      setForm({
+        maintenanceMode: (settingsData as any).maintenanceMode ?? false,
+        defaultIndividualCredits: (settingsData as any).defaultIndividualCredits ?? 20,
+        defaultCorporateCredits: (settingsData as any).defaultCorporateCredits ?? 100,
+        aiModelVersion: (settingsData as any).aiModelVersion ?? "gpt-4o-mini",
+        emailNotifications: (settingsData as any).emailNotifications ?? true,
+        maxEmployeesPerCompany: (settingsData as any).maxEmployeesPerCompany ?? 50,
+        planGenerationLimit: (settingsData as any).planGenerationLimit ?? 10,
+        globalDisclaimer: (settingsData as any).globalDisclaimer ?? "",
+      });
+    }
+  }, [settingsData]);
+
   const handleSave = () => {
-    updateSettings(form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    updateSettingsMutation.mutate(form as any, {
+      onSuccess: () => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      },
+    });
   };
 
   const handleReset = () => {
-    setForm({ ...settings });
+    if (settingsData) {
+      setForm({
+        maintenanceMode: (settingsData as any).maintenanceMode ?? false,
+        defaultIndividualCredits: (settingsData as any).defaultIndividualCredits ?? 20,
+        defaultCorporateCredits: (settingsData as any).defaultCorporateCredits ?? 100,
+        aiModelVersion: (settingsData as any).aiModelVersion ?? "gpt-4o-mini",
+        emailNotifications: (settingsData as any).emailNotifications ?? true,
+        maxEmployeesPerCompany: (settingsData as any).maxEmployeesPerCompany ?? 50,
+        planGenerationLimit: (settingsData as any).planGenerationLimit ?? 10,
+        globalDisclaimer: (settingsData as any).globalDisclaimer ?? "",
+      });
+    }
+  };
+
+  const handleToggleMaintenance = () => {
+    toggleMaintenanceMutation.mutate(undefined, {
+      onSuccess: () => {
+        setForm((prev) => ({ ...prev, maintenanceMode: !prev.maintenanceMode }));
+      },
+    });
   };
 
   const roleConfig = [
@@ -50,15 +113,21 @@ export default function SystemSettingsPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-xl lg:text-2xl font-serif font-bold text-heading">System Settings</h1>
         <p className="text-sm text-muted">Configure platform defaults and system behavior</p>
       </div>
 
-      {/* Credit defaults */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Credit Defaults</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -87,7 +156,6 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
-      {/* AI configuration */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">AI Configuration</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -118,20 +186,19 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
-      {/* Platform settings */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Platform Settings</h3>
 
-        {/* Maintenance mode */}
         <div className="flex items-center justify-between py-2">
           <div>
             <p className="text-sm text-heading font-medium">Maintenance Mode</p>
             <p className="text-xs text-muted">Take the platform offline for maintenance</p>
           </div>
           <button
-            onClick={() => setForm({ ...form, maintenanceMode: !form.maintenanceMode })}
+            onClick={handleToggleMaintenance}
+            disabled={toggleMaintenanceMutation.isPending}
             className={cn(
-              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200",
+              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:opacity-50",
               form.maintenanceMode ? "bg-warning" : "bg-accent"
             )}
           >
@@ -144,7 +211,6 @@ export default function SystemSettingsPage() {
           </button>
         </div>
 
-        {/* Email notifications */}
         <div className="flex items-center justify-between py-2 border-t border-border-light">
           <div>
             <p className="text-sm text-heading font-medium">Email Notifications</p>
@@ -168,7 +234,6 @@ export default function SystemSettingsPage() {
           </button>
         </div>
 
-        {/* Max employees */}
         <div className="pt-2 border-t border-border-light">
           <label className="text-xs text-muted block mb-1">Max Employees Per Company</label>
           <input
@@ -182,7 +247,6 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
-      {/* Global disclaimer */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Global Disclaimer</h3>
         <textarea
@@ -193,11 +257,11 @@ export default function SystemSettingsPage() {
         />
       </div>
 
-      {/* Save / Reset */}
       <div className="flex items-center gap-4">
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150"
+          disabled={updateSettingsMutation.isPending}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50"
         >
           <Save className="w-4 h-4" /> Save Changes
         </button>
@@ -210,13 +274,12 @@ export default function SystemSettingsPage() {
         {saved && <span className="text-sm text-success font-medium">Settings saved!</span>}
       </div>
 
-      {/* Admin roles reference */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Admin Roles</h3>
         <p className="text-xs text-muted">
           Current role:{" "}
           <span className="font-semibold text-heading capitalize">
-            {admin?.role.replace(/_/g, " ")}
+            {admin?.role?.replace(/_/g, " ") ?? "unknown"}
           </span>
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

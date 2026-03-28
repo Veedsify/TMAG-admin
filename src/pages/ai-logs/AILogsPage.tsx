@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, Eye, X, Activity, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Search, Eye, X, Activity, CheckCircle, XCircle, AlertTriangle, LucideLoader2 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useAILogs } from "../../api/hooks";
+import type { AIRequestLog } from "../../api/types";
 
 type FilterTab = "all" | "failures" | "flagged" | "high-usage";
 
@@ -14,7 +15,9 @@ const TAB_CONFIG: { key: FilterTab; label: string; path: string }[] = [
 ];
 
 export default function AILogsPage() {
-  const { aiLogs } = useAdminDataStore();
+  const { data: aiLogsData, isLoading } = useAILogs();
+  const aiLogs: AIRequestLog[] = aiLogsData ?? [];
+
   const location = useLocation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -52,6 +55,14 @@ export default function AILogsPage() {
     { label: "Flagged", value: aiLogs.filter((l) => l.status === "flagged").length, icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10" },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 lg:space-y-10">
       <div>
@@ -59,7 +70,6 @@ export default function AILogsPage() {
         <p className="text-sm text-muted mt-0.5">Monitor all AI processing requests for debugging and compliance</p>
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         {summaryCards.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
@@ -76,7 +86,6 @@ export default function AILogsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -104,7 +113,6 @@ export default function AILogsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-border-light/50 overflow-x-auto">
         <table className="w-full text-sm min-w-[900px]">
           <thead>
@@ -151,7 +159,7 @@ export default function AILogsPage() {
                 <td className="p-4 text-body">{log.tokensUsed.toLocaleString()}</td>
                 <td className="p-4 text-body">{log.processingTimeMs.toLocaleString()}</td>
                 <td className="p-4 text-muted text-xs">{log.modelUsed}</td>
-                <td className="p-4 text-muted text-xs whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                <td className="p-4 text-muted text-xs whitespace-nowrap">{log.timestamp ? new Date(log.timestamp).toLocaleString() : "—"}</td>
                 <td className="p-4">
                   <button onClick={() => setSelected(log.id)} className="p-1.5 rounded-xl hover:bg-background-secondary text-muted hover:text-heading">
                     <Eye className="w-4 h-4" />
@@ -159,11 +167,17 @@ export default function AILogsPage() {
                 </td>
               </tr>
             ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={9} className="p-8 text-center text-muted text-sm">
+                  No AI logs found matching your filters.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Detail modal */}
       {detail && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
           <div className="bg-white rounded-2xl border border-border-light/50 w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
@@ -182,7 +196,7 @@ export default function AILogsPage() {
                 ["Tokens Used", detail.tokensUsed.toLocaleString()],
                 ["Processing Time", `${detail.processingTimeMs}ms`],
                 ["Credit Consumed", detail.creditConsumed ? "Yes" : "No"],
-                ["Timestamp", new Date(detail.timestamp).toLocaleString()],
+                ["Timestamp", detail.timestamp ? new Date(detail.timestamp).toLocaleString() : "—"],
               ] as const).map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-border-light/50 pb-2">
                   <span className="text-muted">{label}</span>

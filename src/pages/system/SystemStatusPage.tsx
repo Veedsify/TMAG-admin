@@ -11,93 +11,73 @@ import {
   Clock,
   Gauge,
   Power,
+  LucideLoader2,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useSystemStatus, useSystemLogs, useSystemSettings, useToggleMaintenanceMode } from "../../api/hooks";
+import type { SystemLog } from "../../api/types";
 
-const SERVICE_STATUSES = [
-  {
-    name: "AI Engine",
-    icon: Server,
-    status: "operational" as const,
-    uptime: "99.97%",
-    responseTime: "142ms",
-    lastCheck: "2 min ago",
-  },
-  {
-    name: "Database",
-    icon: Database,
-    status: "operational" as const,
-    uptime: "99.99%",
-    responseTime: "8ms",
-    lastCheck: "1 min ago",
-  },
-  {
-    name: "Payment Gateway",
-    icon: CreditCard,
-    status: "degraded" as const,
-    uptime: "98.50%",
-    responseTime: "890ms",
-    lastCheck: "3 min ago",
-  },
-  {
-    name: "Email Service",
-    icon: Mail,
-    status: "operational" as const,
-    uptime: "99.90%",
-    responseTime: "210ms",
-    lastCheck: "1 min ago",
-  },
-];
-
-function statusDot(status: "operational" | "degraded" | "down") {
+function statusDot(status: string) {
+  const statusMap: Record<string, string> = {
+    healthy: "bg-success",
+    operational: "bg-success",
+    degraded: "bg-warning",
+    down: "bg-danger",
+  };
   return (
     <span
       className={cn(
         "inline-block w-2.5 h-2.5 rounded-full",
-        status === "operational" && "bg-success",
-        status === "degraded" && "bg-warning",
-        status === "down" && "bg-danger"
+        statusMap[status] ?? "bg-success"
       )}
     />
   );
 }
 
-function statusLabel(status: "operational" | "degraded" | "down") {
-  const map = { operational: "Operational", degraded: "Degraded", down: "Down" };
-  return (
-    <span
-      className={cn(
-        "text-xs font-medium",
-        status === "operational" && "text-success",
-        status === "degraded" && "text-warning",
-        status === "down" && "text-danger"
-      )}
-    >
-      {map[status]}
-    </span>
-  );
+function statusLabel(status: string) {
+  const map: Record<string, { label: string; className: string }> = {
+    healthy: { label: "Operational", className: "text-success" },
+    operational: { label: "Operational", className: "text-success" },
+    degraded: { label: "Degraded", className: "text-warning" },
+    down: { label: "Down", className: "text-danger" },
+  };
+  const s = map[status] ?? map.healthy;
+  return <span className={cn("text-xs font-medium", s.className)}>{s.label}</span>;
 }
 
-function healthIcon(health: "healthy" | "degraded" | "down") {
+function healthIcon(health: string) {
   if (health === "healthy") return <CheckCircle2 className="w-5 h-5 text-success" />;
   if (health === "degraded") return <AlertTriangle className="w-5 h-5 text-warning" />;
   return <XCircle className="w-5 h-5 text-danger" />;
 }
 
 export default function SystemStatusPage() {
-  const { stats, systemLogs, settings, updateSettings } = useAdminDataStore();
+  const { data: statusData, isLoading: statusLoading } = useSystemStatus();
+  const { data: logsData, isLoading: logsLoading } = useSystemLogs();
+  const { data: settingsData, isLoading: settingsLoading } = useSystemSettings();
+  const toggleMaintenanceMutation = useToggleMaintenanceMode();
+
   const [toggling, setToggling] = useState(false);
+
+  const systemLogs: SystemLog[] = logsData ?? [];
+  const settings = settingsData ?? {
+    maintenanceMode: false,
+    defaultIndividualCredits: 20,
+    defaultCorporateCredits: 100,
+    aiModelVersion: "gpt-4o-mini",
+  };
+
+  const isLoading = statusLoading || logsLoading || settingsLoading;
 
   const incidents = systemLogs
     .filter((l) => l.level === "warning" || l.level === "error" || l.level === "critical")
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 8);
 
   const handleMaintenanceToggle = () => {
-    updateSettings({ maintenanceMode: !settings.maintenanceMode });
     setToggling(true);
-    setTimeout(() => setToggling(false), 1500);
+    toggleMaintenanceMutation.mutate(undefined, {
+      onSettled: () => setToggling(false),
+    });
   };
 
   const fmtDate = (iso: string) =>
@@ -108,23 +88,60 @@ export default function SystemStatusPage() {
       minute: "2-digit",
     });
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
+  const services = [
+    {
+      name: "Database",
+      icon: Database,
+      status: statusData?.services?.find((s: {name: string; status: string}) => s.name === "database")?.status ?? "healthy",
+      uptime: "99.99%",
+      responseTime: "8ms",
+    },
+    {
+      name: "AI Engine",
+      icon: Server,
+      status: statusData?.services?.find((s: {name: string; status: string}) => s.name === "aiService")?.status ?? "healthy",
+      uptime: "99.97%",
+      responseTime: "142ms",
+    },
+    {
+      name: "Payment Gateway",
+      icon: CreditCard,
+      status: statusData?.services?.find((s: {name: string; status: string}) => s.name === "billing")?.status ?? "healthy",
+      uptime: "99.50%",
+      responseTime: "210ms",
+    },
+    {
+      name: "Email Service",
+      icon: Mail,
+      status: statusData?.services?.find((s: {name: string; status: string}) => s.name === "emailService")?.status ?? "healthy",
+      uptime: "99.90%",
+      responseTime: "180ms",
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl lg:text-2xl font-serif font-bold text-heading">System Status</h1>
           <p className="text-sm text-muted">Monitor platform health and service availability</p>
         </div>
         <div className="flex items-center gap-2">
-          {healthIcon(stats.systemHealthStatus)}
+          {healthIcon(statusData?.status ?? "healthy")}
           <span className="text-sm font-semibold text-heading capitalize">
-            {stats.systemHealthStatus}
+            {statusData?.status ?? "healthy"}
           </span>
         </div>
       </div>
 
-      {/* Overview cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
           <div className="flex items-center gap-3 mb-2">
@@ -133,7 +150,7 @@ export default function SystemStatusPage() {
             </div>
             <p className="text-xs text-muted font-medium uppercase tracking-wide">Overall Uptime</p>
           </div>
-          <p className="text-2xl font-bold text-heading">99.84%</p>
+          <p className="text-2xl font-bold text-heading">{statusData?.uptime ?? "99.9%"}</p>
           <p className="text-xs text-muted mt-1">Last 30 days</p>
         </div>
 
@@ -160,7 +177,6 @@ export default function SystemStatusPage() {
         </div>
       </div>
 
-      {/* Maintenance mode */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -176,8 +192,9 @@ export default function SystemStatusPage() {
           </div>
           <button
             onClick={handleMaintenanceToggle}
+            disabled={toggleMaintenanceMutation.isPending}
             className={cn(
-              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200",
+              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 disabled:opacity-50",
               settings.maintenanceMode ? "bg-warning" : "bg-accent"
             )}
           >
@@ -189,18 +206,17 @@ export default function SystemStatusPage() {
             />
           </button>
         </div>
-        {toggling && (
+        {toggling && !toggleMaintenanceMutation.isPending && (
           <p className="text-xs text-success mt-2 font-medium">
             Maintenance mode {settings.maintenanceMode ? "enabled" : "disabled"} successfully.
           </p>
         )}
       </div>
 
-      {/* Service status cards */}
       <div>
         <h2 className="text-sm font-semibold text-heading mb-3">Service Status</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {SERVICE_STATUSES.map((svc) => (
+          {services.map((svc) => (
             <div
               key={svc.name}
               className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-3"
@@ -222,17 +238,12 @@ export default function SystemStatusPage() {
                   <span>Response</span>
                   <span className="text-heading font-medium">{svc.responseTime}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Last check</span>
-                  <span className="text-heading font-medium">{svc.lastCheck}</span>
-                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Recent incidents */}
       <div>
         <h2 className="text-sm font-semibold text-heading mb-3">Recent Incidents</h2>
         {incidents.length === 0 ? (
@@ -272,7 +283,7 @@ export default function SystemStatusPage() {
                     <span className="text-xs text-muted">{log.source}</span>
                     <span className="text-xs text-muted ml-auto flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {fmtDate(log.timestamp)}
+                      {log.timestamp ? fmtDate(log.timestamp) : "—"}
                     </span>
                   </div>
                   <p className="text-sm text-heading mt-1">{log.message}</p>

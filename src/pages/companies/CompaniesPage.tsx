@@ -9,16 +9,26 @@ import {
   FileText,
   ShieldCheck,
   CalendarClock,
+  LucideLoader2,
+  X,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { useAdminDataStore } from "../../stores/adminDataStore";
+import { useCompanies, useCreateCompany } from "../../api/hooks";
+import type { Company } from "../../api/types";
 
 type BillingFilter = "all" | "active" | "overdue" | "frozen";
 
+const emptyForm = { name: "", industry: "", contactEmail: "", contactPhone: "", website: "", address: "", billingCurrency: "NGN", adminName: "", adminEmail: "", adminPassword: "" };
+
 export default function CompaniesPage() {
-  const { companies } = useAdminDataStore();
+  const { data: companiesData, isLoading } = useCompanies();
+  const createMutation = useCreateCompany();
+  const companies: Company[] = companiesData ?? [];
+
   const [search, setSearch] = useState("");
   const [billingFilter, setBillingFilter] = useState<BillingFilter>("all");
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState(emptyForm);
 
   const filtered = companies.filter((c) => {
     const matchesSearch = c.name
@@ -53,9 +63,16 @@ export default function CompaniesPage() {
     { key: "frozen", label: "Frozen" },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LucideLoader2 className="w-8 h-8 text-accent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-xl lg:text-2xl font-serif font-bold text-heading">
@@ -65,12 +82,14 @@ export default function CompaniesPage() {
             {companies.length}
           </span>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150">
+        <button
+          onClick={() => setShowCreate(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150"
+        >
           <Plus className="w-4 h-4" /> Add Company
         </button>
       </div>
 
-      {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryStats.map((s) => (
           <div
@@ -88,7 +107,6 @@ export default function CompaniesPage() {
         ))}
       </div>
 
-      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
@@ -118,7 +136,6 @@ export default function CompaniesPage() {
         </div>
       </div>
 
-      {/* Company Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map((company) => {
           const creditPercent =
@@ -132,7 +149,6 @@ export default function CompaniesPage() {
               key={company.id}
               className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4"
             >
-              {/* Company Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -142,7 +158,7 @@ export default function CompaniesPage() {
                     <h3 className="font-semibold text-heading">
                       {company.name}
                     </h3>
-                    <p className="text-xs text-muted">{company.industry}</p>
+                    <p className="text-xs text-muted">{company.industry || "N/A"}</p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
@@ -172,7 +188,6 @@ export default function CompaniesPage() {
                 </div>
               </div>
 
-              {/* Credit Progress Bar */}
               <div>
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-muted">Credits</span>
@@ -195,14 +210,13 @@ export default function CompaniesPage() {
                 </div>
               </div>
 
-              {/* Stats Row */}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-background-secondary rounded-xl p-2">
                   <div className="flex items-center justify-center gap-1 mb-0.5">
                     <Users className="w-3 h-3 text-muted" />
                   </div>
                   <p className="text-sm font-bold font-serif text-heading">
-                    {company.activeEmployees}
+                    {company.activeEmployees ?? 0}
                   </p>
                   <p className="text-[10px] text-muted uppercase">Employees</p>
                 </div>
@@ -211,7 +225,7 @@ export default function CompaniesPage() {
                     <FileText className="w-3 h-3 text-muted" />
                   </div>
                   <p className="text-sm font-bold font-serif text-heading">
-                    {company.plansGenerated}
+                    {company.plansGenerated ?? 0}
                   </p>
                   <p className="text-[10px] text-muted uppercase">Plans</p>
                 </div>
@@ -220,19 +234,17 @@ export default function CompaniesPage() {
                     <ShieldCheck className="w-3 h-3 text-muted" />
                   </div>
                   <p className="text-sm font-bold font-serif text-heading">
-                    {company.hrAdmins.length}
+                    {company.hrAdmins?.length ?? 0}
                   </p>
                   <p className="text-[10px] text-muted uppercase">HR Admins</p>
                 </div>
               </div>
 
-              {/* Contract Renewal */}
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <CalendarClock className="w-3.5 h-3.5" />
-                Renewal: {company.contractRenewal}
+                Renewal: {company.contractRenewal ? new Date(company.contractRenewal).toLocaleDateString() : "N/A"}
               </div>
 
-              {/* View Details */}
               <Link
                 to={`/admin/companies/${company.id}`}
                 className="flex items-center justify-center gap-2 w-full py-2 bg-button-secondary hover:bg-background-primary rounded-xl text-sm font-medium text-heading transition-colors duration-150"
@@ -247,6 +259,92 @@ export default function CompaniesPage() {
       {filtered.length === 0 && (
         <div className="flex items-center justify-center h-32">
           <p className="text-sm text-muted">No companies match your search.</p>
+        </div>
+      )}
+
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowCreate(false)}>
+          <div className="bg-white rounded-2xl border border-border-light/50 w-full max-w-lg p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-serif font-bold text-heading">Add Company</h2>
+              <button onClick={() => setShowCreate(false)} className="text-muted hover:text-heading"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-3">
+              {([
+                { field: "name", label: "Company Name *", type: "text", placeholder: "" },
+                { field: "industry", label: "Industry", type: "text", placeholder: "e.g. Finance, Healthcare" },
+                { field: "contactEmail", label: "Contact Email", type: "email", placeholder: "" },
+                { field: "contactPhone", label: "Contact Phone", type: "tel", placeholder: "Optional" },
+                { field: "website", label: "Website", type: "text", placeholder: "Optional" },
+                { field: "address", label: "Address", type: "text", placeholder: "Optional" },
+              ] as const).map(({ field, label, type, placeholder }) => (
+                <div key={field}>
+                  <label className="block text-xs text-muted mb-1">{label}</label>
+                  <input
+                    type={type}
+                    value={createForm[field]}
+                    onChange={(e) => setCreateForm({ ...createForm, [field]: e.target.value })}
+                    placeholder={placeholder}
+                    className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs text-muted mb-1">Billing Currency</label>
+                <select
+                  value={createForm.billingCurrency}
+                  onChange={(e) => setCreateForm({ ...createForm, billingCurrency: e.target.value })}
+                  className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="NGN">NGN — Nigerian Naira</option>
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                </select>
+              </div>
+
+              <div className="pt-2 border-t border-border-light/50">
+                <p className="text-xs font-semibold text-heading mb-3">Default HR Admin Account</p>
+                {([
+                  { field: "adminName", label: "Admin Name", type: "text", placeholder: "" },
+                  { field: "adminEmail", label: "Admin Email *", type: "email", placeholder: "" },
+                  { field: "adminPassword", label: "Admin Password *", type: "password", placeholder: "" },
+                ] as const).map(({ field, label, type, placeholder }) => (
+                  <div key={field} className="mb-3">
+                    <label className="block text-xs text-muted mb-1">{label}</label>
+                    <input
+                      type={type}
+                      value={createForm[field]}
+                      onChange={(e) => setCreateForm({ ...createForm, [field]: e.target.value })}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                ))}
+                <p className="text-[11px] text-muted">The admin will be prompted to change their password on first login.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => {
+                  if (!createForm.name || !createForm.adminEmail || !createForm.adminPassword) return;
+                  createMutation.mutate(createForm, {
+                    onSuccess: () => {
+                      setShowCreate(false);
+                      setCreateForm(emptyForm);
+                    },
+                  });
+                }}
+                disabled={createMutation.isPending || !createForm.name || !createForm.adminEmail || !createForm.adminPassword}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 disabled:opacity-50"
+              >
+                {createMutation.isPending ? "Creating..." : "Create Company"}
+              </button>
+              <button onClick={() => setShowCreate(false)} className="px-4 py-2 bg-button-secondary text-body rounded-xl text-sm font-medium hover:bg-background-primary">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
