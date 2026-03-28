@@ -63,8 +63,8 @@ export const adminApi = {
   adjustCredits: (data: CreditAdjustment) => api.post<CreditLedgerEntry>("/admin/ledger/adjust", data),
 
   // Billing - /admin/billing/*
-  getInvoices: () => api.get<Invoice[]>("/admin/billing/invoices"),
-  getInvoice: (id: string) => api.get<Invoice>(`/admin/billing/invoices/${id}`),
+  getInvoices: () => api.get<ApiResponse<Invoice[]>>("/admin/billing/invoices").then((r) => r.data.data),
+  getInvoice: (id: string) => api.get<ApiResponse<Invoice>>(`/admin/billing/invoices/${id}`).then((r) => r.data.data),
   createInvoice: (data: Partial<Invoice>) => api.post<Invoice>("/admin/billing/invoices", data),
   updateInvoice: (id: string, data: Partial<Invoice>) => api.put<Invoice>(`/admin/billing/invoices/${id}`, data),
   markInvoicePaid: (id: string) => api.post(`/admin/billing/invoices/${id}/paid`),

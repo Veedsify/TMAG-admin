@@ -352,20 +352,14 @@ export const useAdjustCredits = () => {
 export const useInvoices = () => {
   return useQuery({
     queryKey: queryKeys.invoices,
-    queryFn: async () => {
-      const { data } = await adminApi.getInvoices();
-      return data;
-    },
+    queryFn: () => adminApi.getInvoices() as Promise<any>,
   });
 };
 
 export const useInvoice = (id: string) => {
   return useQuery({
     queryKey: queryKeys.invoice(id),
-    queryFn: async () => {
-      const { data } = await adminApi.getInvoice(id);
-      return data;
-    },
+    queryFn: () => adminApi.getInvoice(id) as Promise<any>,
     enabled: !!id,
   });
 };

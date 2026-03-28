@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
 import { adminApi } from "../../api/api";
 import { setAuthCookie } from "../../api/axios";
@@ -28,7 +28,6 @@ export default function LoginPage() {
         try {
             const response = await adminApi.login({ email, password });
             const { token, exp, user } = response.data.data;
-            console.log(user)
             setAuthCookie(token, exp);
             login({
                 id: String(user.id),
@@ -39,7 +38,6 @@ export default function LoginPage() {
             });
             navigate("/admin/dashboard");
         } catch (err) {
-
             if (err instanceof AxiosError)
                 if (err.response?.data?.message) {
                     setError(err.response.data.message);
@@ -52,48 +50,61 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background-primary flex items-center justify-center p-4">
-            {/* Background texture */}
-            <div className="fixed inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #3d2c1e 1px, transparent 0)", backgroundSize: "32px 32px" }} />
+        <div className="min-h-screen bg-background-primary flex flex-col">
+            {/* Gold accent strip at top */}
+            <div className="h-1 bg-gradient-to-r from-gold/80 via-gold to-gold/80" />
 
-            <div className="relative w-full max-w-md">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-accent mb-4">
-                        <Shield className="w-7 h-7 text-white" />
+            <div className="flex-1 flex items-center justify-center px-6 pb-16">
+                <div className="w-full max-w-md">
+                    <div className="flex items-center gap-2 mb-8">
+                        <div className="w-9 h-9 rounded-lg bg-darkest flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">TM</span>
+                        </div>
+                        <div>
+                            <p className="text-heading text-sm font-semibold leading-tight">TMAG</p>
+                            <p className="text-gold text-[10px] font-semibold leading-tight uppercase tracking-widest">Admin Portal</p>
+                        </div>
                     </div>
-                    <h1 className="text-2xl font-serif font-bold text-heading">TMAG Admin</h1>
-                    <p className="text-sm text-muted mt-1">Sign in to the administration panel</p>
-                </div>
 
-                {/* Form card */}
-                <div className="bg-white rounded-2xl border border-border-light p-6 lg:p-8 space-y-5">
+                    <h1 className="text-3xl md:text-4xl font-serif text-heading mb-2 pl-4 border-l-[3px] border-gold/60">
+                        Admin Sign In
+                    </h1>
+                    <p className="text-sm text-body mb-8">
+                        Access the admin dashboard to manage the platform.
+                    </p>
+
                     {error && (
-                        <div className="bg-danger/5 border border-danger/20 rounded-xl px-4 py-3 text-sm text-danger">
+                        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
                             {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-heading mb-1.5">Email address</label>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                Email
+                            </label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                                placeholder="admin@tmag.com"
-                                className="w-full px-4 py-2.5 bg-background-primary border border-border-light rounded-xl text-sm text-heading placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
+                                placeholder="admin@example.com"
+                                className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200"
+                                required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-heading mb-1.5">Password</label>
+                            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+                                Password
+                            </label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                                    placeholder="Enter your password"
-                                    className="w-full px-4 py-2.5 bg-background-primary border border-border-light rounded-xl text-sm text-heading placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 pr-10"
+                                    placeholder="••••••••"
+                                    className="w-full bg-white border border-border-light rounded-xl px-4 py-3 text-sm text-heading placeholder:text-border outline-none focus:border-accent transition-colors duration-200 pr-10"
+                                    required
                                 />
                                 <button
                                     type="button"
@@ -108,14 +119,15 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 rounded-xl bg-dark text-background-primary font-semibold text-sm cursor-pointer hover:bg-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "Signing in..." : "Sign in"}
                         </button>
                     </form>
 
-                    <p className="text-center text-xs text-muted">
-                        Protected area. Unauthorized access is prohibited.
+                    <p className="text-xs text-muted text-center mt-8 flex items-center justify-center gap-1.5">
+                        <Lock className="w-3 h-3" />
+                        Only SuperAdmin and Administrator accounts can access this portal.
                     </p>
                 </div>
             </div>
