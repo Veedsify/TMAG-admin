@@ -6,11 +6,14 @@ import {
   UserCog,
   HeadphonesIcon,
   LucideLoader2,
+  RefreshCw,
+  Globe,
 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import { cn } from "../../lib/utils";
-import { useSystemSettings, useUpdateSystemSettings, useToggleMaintenanceMode } from "../../api/hooks";
+import { useSystemSettings, useUpdateSystemSettings, useToggleMaintenanceMode, useFetchLiveRates } from "../../api/hooks";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
+import toast from "react-hot-toast";
 
 interface SystemSettingsData {
   maintenanceMode: boolean;
@@ -25,6 +28,17 @@ interface SystemSettingsData {
   exchangeRateNGN: number;
   exchangeRateEUR: number;
   exchangeRateGBP: number;
+  exchangeRateINR: number;
+  exchangeRateCAD: number;
+  exchangeRateAUD: number;
+  exchangeRateKES: number;
+  exchangeRateZAR: number;
+  exchangeRateGHS: number;
+  exchangeRateJPY: number;
+  exchangeRateBRL: number;
+  exchangeRateAED: number;
+  exchangeRateSGD: number;
+  exchangeRateCHF: number;
 }
 
 const defaultSettings: SystemSettingsData = {
@@ -37,63 +51,121 @@ const defaultSettings: SystemSettingsData = {
   planGenerationLimit: 10,
   globalDisclaimer: "",
   revenueBaseCurrency: "USD",
-  exchangeRateNGN: 0.00065,
-  exchangeRateEUR: 1.08,
-  exchangeRateGBP: 1.27,
+  exchangeRateNGN: 1550,
+  exchangeRateEUR: 0.92,
+  exchangeRateGBP: 0.79,
+  exchangeRateINR: 83.5,
+  exchangeRateCAD: 1.36,
+  exchangeRateAUD: 1.53,
+  exchangeRateKES: 153,
+  exchangeRateZAR: 18.2,
+  exchangeRateGHS: 14.5,
+  exchangeRateJPY: 149.5,
+  exchangeRateBRL: 5.05,
+  exchangeRateAED: 3.67,
+  exchangeRateSGD: 1.34,
+  exchangeRateCHF: 0.88,
 };
+
+const SUPPORTED_CURRENCIES = [
+  { key: "exchangeRateNGN", code: "NGN", name: "Nigerian Naira", symbol: "₦" },
+  { key: "exchangeRateEUR", code: "EUR", name: "Euro", symbol: "€" },
+  { key: "exchangeRateGBP", code: "GBP", name: "British Pound", symbol: "£" },
+  { key: "exchangeRateINR", code: "INR", name: "Indian Rupee", symbol: "₹" },
+  { key: "exchangeRateCAD", code: "CAD", name: "Canadian Dollar", symbol: "C$" },
+  { key: "exchangeRateAUD", code: "AUD", name: "Australian Dollar", symbol: "A$" },
+  { key: "exchangeRateKES", code: "KES", name: "Kenyan Shilling", symbol: "KSh" },
+  { key: "exchangeRateZAR", code: "ZAR", name: "South African Rand", symbol: "R" },
+  { key: "exchangeRateGHS", code: "GHS", name: "Ghanaian Cedi", symbol: "GH₵" },
+  { key: "exchangeRateJPY", code: "JPY", name: "Japanese Yen", symbol: "¥" },
+  { key: "exchangeRateBRL", code: "BRL", name: "Brazilian Real", symbol: "R$" },
+  { key: "exchangeRateAED", code: "AED", name: "UAE Dirham", symbol: "د.إ" },
+  { key: "exchangeRateSGD", code: "SGD", name: "Singapore Dollar", symbol: "S$" },
+  { key: "exchangeRateCHF", code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+] as const;
 
 export default function SystemSettingsPage() {
   const { data: settingsData, isLoading } = useSystemSettings();
   const updateSettingsMutation = useUpdateSystemSettings();
   const toggleMaintenanceMutation = useToggleMaintenanceMode();
+  const fetchLiveRates = useFetchLiveRates();
 
   const admin = useAdminAuthStore((s) => s.admin);
   const [form, setForm] = useState<SystemSettingsData>(defaultSettings);
   const [saved, setSaved] = useState(false);
+  const [fetchingRates, setFetchingRates] = useState(false);
 
   useEffect(() => {
     if (settingsData) {
+      const d = settingsData as unknown as Record<string, unknown>;
       setForm({
-        maintenanceMode: (settingsData as any).maintenanceMode ?? false,
-        defaultIndividualCredits: (settingsData as any).defaultIndividualCredits ?? 20,
-        defaultCorporateCredits: (settingsData as any).defaultCorporateCredits ?? 100,
-        aiModelVersion: (settingsData as any).aiModelVersion ?? "gpt-4o-mini",
-        emailNotifications: (settingsData as any).emailNotifications ?? true,
-        maxEmployeesPerCompany: (settingsData as any).maxEmployeesPerCompany ?? 50,
-        planGenerationLimit: (settingsData as any).planGenerationLimit ?? 10,
-        globalDisclaimer: (settingsData as any).globalDisclaimer ?? "",
-        revenueBaseCurrency: (settingsData as any).revenueBaseCurrency ?? "USD",
-        exchangeRateNGN: (settingsData as any).exchangeRateNGN ?? 0.00065,
-        exchangeRateEUR: (settingsData as any).exchangeRateEUR ?? 1.08,
-        exchangeRateGBP: (settingsData as any).exchangeRateGBP ?? 1.27,
+        maintenanceMode: (d.maintenanceMode as boolean) ?? false,
+        defaultIndividualCredits: (d.defaultIndividualCredits as number) ?? 20,
+        defaultCorporateCredits: (d.defaultCorporateCredits as number) ?? 100,
+        aiModelVersion: (d.aiModelVersion as string) ?? "gpt-4o-mini",
+        emailNotifications: (d.emailNotifications as boolean) ?? true,
+        maxEmployeesPerCompany: (d.maxEmployeesPerCompany as number) ?? 50,
+        planGenerationLimit: (d.planGenerationLimit as number) ?? 10,
+        globalDisclaimer: (d.globalDisclaimer as string) ?? "",
+        revenueBaseCurrency: (d.revenueBaseCurrency as string) ?? "USD",
+        exchangeRateNGN: (d.exchangeRateNGN as number) ?? 1550,
+        exchangeRateEUR: (d.exchangeRateEUR as number) ?? 0.92,
+        exchangeRateGBP: (d.exchangeRateGBP as number) ?? 0.79,
+        exchangeRateINR: (d.exchangeRateINR as number) ?? 83.5,
+        exchangeRateCAD: (d.exchangeRateCAD as number) ?? 1.36,
+        exchangeRateAUD: (d.exchangeRateAUD as number) ?? 1.53,
+        exchangeRateKES: (d.exchangeRateKES as number) ?? 153,
+        exchangeRateZAR: (d.exchangeRateZAR as number) ?? 18.2,
+        exchangeRateGHS: (d.exchangeRateGHS as number) ?? 14.5,
+        exchangeRateJPY: (d.exchangeRateJPY as number) ?? 149.5,
+        exchangeRateBRL: (d.exchangeRateBRL as number) ?? 5.05,
+        exchangeRateAED: (d.exchangeRateAED as number) ?? 3.67,
+        exchangeRateSGD: (d.exchangeRateSGD as number) ?? 1.34,
+        exchangeRateCHF: (d.exchangeRateCHF as number) ?? 0.88,
       });
     }
   }, [settingsData]);
 
   const handleSave = () => {
-    updateSettingsMutation.mutate(form as any, {
+    updateSettingsMutation.mutate(form as unknown as any, {
       onSuccess: () => {
         setSaved(true);
+        toast.success("Settings saved");
         setTimeout(() => setSaved(false), 2000);
+      },
+      onError: () => {
+        toast.error("Failed to save settings");
       },
     });
   };
 
   const handleReset = () => {
     if (settingsData) {
+      const d = settingsData as unknown as Record<string, unknown>;
       setForm({
-        maintenanceMode: (settingsData as any).maintenanceMode ?? false,
-        defaultIndividualCredits: (settingsData as any).defaultIndividualCredits ?? 20,
-        defaultCorporateCredits: (settingsData as any).defaultCorporateCredits ?? 100,
-        aiModelVersion: (settingsData as any).aiModelVersion ?? "gpt-4o-mini",
-        emailNotifications: (settingsData as any).emailNotifications ?? true,
-        maxEmployeesPerCompany: (settingsData as any).maxEmployeesPerCompany ?? 50,
-        planGenerationLimit: (settingsData as any).planGenerationLimit ?? 10,
-        globalDisclaimer: (settingsData as any).globalDisclaimer ?? "",
-        revenueBaseCurrency: (settingsData as any).revenueBaseCurrency ?? "USD",
-        exchangeRateNGN: (settingsData as any).exchangeRateNGN ?? 0.00065,
-        exchangeRateEUR: (settingsData as any).exchangeRateEUR ?? 1.08,
-        exchangeRateGBP: (settingsData as any).exchangeRateGBP ?? 1.27,
+        maintenanceMode: (d.maintenanceMode as boolean) ?? false,
+        defaultIndividualCredits: (d.defaultIndividualCredits as number) ?? 20,
+        defaultCorporateCredits: (d.defaultCorporateCredits as number) ?? 100,
+        aiModelVersion: (d.aiModelVersion as string) ?? "gpt-4o-mini",
+        emailNotifications: (d.emailNotifications as boolean) ?? true,
+        maxEmployeesPerCompany: (d.maxEmployeesPerCompany as number) ?? 50,
+        planGenerationLimit: (d.planGenerationLimit as number) ?? 10,
+        globalDisclaimer: (d.globalDisclaimer as string) ?? "",
+        revenueBaseCurrency: (d.revenueBaseCurrency as string) ?? "USD",
+        exchangeRateNGN: (d.exchangeRateNGN as number) ?? 1550,
+        exchangeRateEUR: (d.exchangeRateEUR as number) ?? 0.92,
+        exchangeRateGBP: (d.exchangeRateGBP as number) ?? 0.79,
+        exchangeRateINR: (d.exchangeRateINR as number) ?? 83.5,
+        exchangeRateCAD: (d.exchangeRateCAD as number) ?? 1.36,
+        exchangeRateAUD: (d.exchangeRateAUD as number) ?? 1.53,
+        exchangeRateKES: (d.exchangeRateKES as number) ?? 153,
+        exchangeRateZAR: (d.exchangeRateZAR as number) ?? 18.2,
+        exchangeRateGHS: (d.exchangeRateGHS as number) ?? 14.5,
+        exchangeRateJPY: (d.exchangeRateJPY as number) ?? 149.5,
+        exchangeRateBRL: (d.exchangeRateBRL as number) ?? 5.05,
+        exchangeRateAED: (d.exchangeRateAED as number) ?? 3.67,
+        exchangeRateSGD: (d.exchangeRateSGD as number) ?? 1.34,
+        exchangeRateCHF: (d.exchangeRateCHF as number) ?? 0.88,
       });
     }
   };
@@ -102,6 +174,33 @@ export default function SystemSettingsPage() {
     toggleMaintenanceMutation.mutate(undefined, {
       onSuccess: () => {
         setForm((prev) => ({ ...prev, maintenanceMode: !prev.maintenanceMode }));
+      },
+    });
+  };
+
+  const handleFetchLiveRates = () => {
+    setFetchingRates(true);
+    fetchLiveRates.mutate(undefined, {
+      onSuccess: (data) => {
+        if (data?.rates) {
+          const rates = data.rates as Record<string, number>;
+          setForm(prev => {
+            const updated = { ...prev } as SystemSettingsData;
+            for (const cur of SUPPORTED_CURRENCIES) {
+              const rate = rates[cur.code];
+              if (rate !== undefined) {
+                (updated as unknown as Record<string, unknown>)[cur.key] = rate;
+              }
+            }
+            return updated;
+          });
+          toast.success("Live rates populated — click Save to persist");
+        }
+        setFetchingRates(false);
+      },
+      onError: () => {
+        toast.error("Failed to fetch live rates");
+        setFetchingRates(false);
       },
     });
   };
@@ -145,6 +244,7 @@ export default function SystemSettingsPage() {
         description="Configure platform defaults and system behavior."
       />
 
+      {/* Credit Defaults */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Credit Defaults</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -173,6 +273,7 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
+      {/* AI Configuration */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">AI Configuration</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -203,6 +304,7 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
+      {/* Platform Settings */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Platform Settings</h3>
 
@@ -264,69 +366,54 @@ export default function SystemSettingsPage() {
         </div>
       </div>
 
+      {/* Currency Configuration */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
-        <div>
-          <h3 className="text-sm font-semibold text-heading">Currency Configuration</h3>
-          <p className="text-xs text-muted mt-0.5">
-            Set the base currency for revenue reporting. Exchange rates convert foreign currency invoices into the base currency.
-            Rates are expressed as: 1 unit of that currency = X {form.revenueBaseCurrency || "USD"}.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold text-heading flex items-center gap-2">
+              <Globe className="w-4 h-4 text-accent" />
+              Currency & Exchange Rates
+            </h3>
+            <p className="text-xs text-muted mt-1">
+              Set exchange rates for the ebook store. Rates are expressed as 1 USD = X of that currency.
+              Admin-configured rates override live API rates in the store.
+            </p>
+          </div>
+          <button
+            onClick={handleFetchLiveRates}
+            disabled={fetchingRates}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-button-secondary border border-border text-body rounded-xl text-xs font-medium hover:bg-background-primary transition-colors shrink-0 disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", fetchingRates && "animate-spin")} />
+            {fetchingRates ? "Fetching..." : "Fetch Live Rates"}
+          </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-muted block mb-1">Base Currency</label>
-            <select
-              value={form.revenueBaseCurrency}
-              onChange={(e) => setForm({ ...form, revenueBaseCurrency: e.target.value })}
-              className="w-full px-3 py-2 bg-background-secondary border border-border rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              <option value="USD">USD — US Dollar ($)</option>
-              <option value="NGN">NGN — Nigerian Naira (₦)</option>
-              <option value="EUR">EUR — Euro (€)</option>
-              <option value="GBP">GBP — British Pound (£)</option>
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border-light">
-          <div>
-            <label className="text-xs text-muted block mb-1">NGN → {form.revenueBaseCurrency || "USD"} rate</label>
-            <input
-              type="number"
-              step="0.000001"
-              min="0"
-              value={form.exchangeRateNGN}
-              onChange={(e) => setForm({ ...form, exchangeRateNGN: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-background-secondary border border-border rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
-              placeholder="e.g. 0.00065"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted block mb-1">EUR → {form.revenueBaseCurrency || "USD"} rate</label>
-            <input
-              type="number"
-              step="0.0001"
-              min="0"
-              value={form.exchangeRateEUR}
-              onChange={(e) => setForm({ ...form, exchangeRateEUR: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-background-secondary border border-border rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
-              placeholder="e.g. 1.08"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted block mb-1">GBP → {form.revenueBaseCurrency || "USD"} rate</label>
-            <input
-              type="number"
-              step="0.0001"
-              min="0"
-              value={form.exchangeRateGBP}
-              onChange={(e) => setForm({ ...form, exchangeRateGBP: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-background-secondary border border-border rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
-              placeholder="e.g. 1.27"
-            />
-          </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {SUPPORTED_CURRENCIES.map((cur) => (
+            <div key={cur.code}>
+              <label className="text-xs text-muted block mb-1">
+                {cur.symbol} {cur.code}
+              </label>
+              <input
+                type="number"
+                step="0.0001"
+                min="0"
+                value={(form as unknown as Record<string, unknown>)[cur.key] as number ?? 0}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setForm(prev => ({ ...prev, [cur.key]: val }));
+                }}
+                className="w-full px-3 py-2 bg-background-secondary border border-border rounded-lg text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                placeholder={cur.name}
+              />
+              <p className="text-[10px] text-brand-muted mt-0.5 truncate">{cur.name}</p>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Global Disclaimer */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Global Disclaimer</h3>
         <textarea
@@ -337,13 +424,19 @@ export default function SystemSettingsPage() {
         />
       </div>
 
+      {/* Save / Reset */}
       <div className="flex items-center gap-4">
         <button
           onClick={handleSave}
           disabled={updateSettingsMutation.isPending}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors duration-150 disabled:opacity-50"
         >
-          <Save className="w-4 h-4" /> Save Changes
+          {updateSettingsMutation.isPending ? (
+            <LucideLoader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
         </button>
         <button
           onClick={handleReset}
@@ -354,6 +447,7 @@ export default function SystemSettingsPage() {
         {saved && <span className="text-sm text-success font-medium">Settings saved!</span>}
       </div>
 
+      {/* Admin Roles */}
       <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8 space-y-4">
         <h3 className="text-sm font-semibold text-heading">Admin Roles</h3>
         <p className="text-xs text-muted">

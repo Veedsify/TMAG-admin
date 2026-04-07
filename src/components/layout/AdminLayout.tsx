@@ -21,6 +21,7 @@ import {
     ShieldAlert,
     Bell,
     FileUp,
+    BookOpen,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
@@ -41,6 +42,7 @@ const navItems: { to: string; icon: ElementType; label: string }[] = [
     { to: "/admin/system/logs", icon: AlertTriangle, label: "System Logs" },
     { to: "/admin/abuse", icon: ShieldAlert, label: "Abuse Flags" },
     { to: "/admin/plan-contexts", icon: FileUp, label: "Plan Contexts" },
+    { to: "/admin/ebooks", icon: BookOpen, label: "Store" },
     { to: "/admin/system/settings", icon: Settings, label: "Settings" },
     { to: "/admin/roles", icon: Shield, label: "Roles" },
     { to: "/admin/admin-users", icon: UserCog, label: "Admin Users" },

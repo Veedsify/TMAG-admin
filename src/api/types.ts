@@ -222,6 +222,17 @@ export interface SystemSettings {
   exchangeRateNGN: number;
   exchangeRateEUR: number;
   exchangeRateGBP: number;
+  exchangeRateINR: number;
+  exchangeRateCAD: number;
+  exchangeRateAUD: number;
+  exchangeRateKES: number;
+  exchangeRateZAR: number;
+  exchangeRateGHS: number;
+  exchangeRateJPY: number;
+  exchangeRateBRL: number;
+  exchangeRateAED: number;
+  exchangeRateSGD: number;
+  exchangeRateCHF: number;
 }
 
 export interface SystemLog {
@@ -385,4 +396,106 @@ export interface HRCreditLedgerEntry {
   createdAt: string;
   updatedAt: string;
 }
+
+// ─── Ebooks ───────────────────────────────────────────────────
+
+export interface AdminEbookVersion {
+  id: number;
+  label: string;
+  countryCode: string | null;
+  countryName: string | null;
+  region: string | null;
+  price: number;
+  currency: string;
+  currencySymbol: string;
+  fileUrl: string | null;
+  fileKey: string | null;
+  fileSizeMb: number | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface AdminEbook {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  shortDescription: string | null;
+  author: string;
+  authorBio: string | null;
+  coverUrl: string | null;
+  previewUrl: string | null;
+  pageCount: number | null;
+  publishedYear: number | null;
+  isbn: string | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  versions: AdminEbookVersion[];
+  createdAt: string;
+}
+
+export interface AdminEbookOrder {
+  id: number;
+  txRef: string;
+  status: string;
+  buyerEmail: string;
+  buyerName: string;
+  buyerPhone: string | null;
+  isGuest: boolean;
+  userId: number | null;
+  ebookId: number;
+  ebookTitle: string;
+  ebookSlug: string;
+  versionLabel: string;
+  countryName: string | null;
+  amount: number;
+  amountPaid: number | null;
+  currency: string;
+  currencySymbol: string;
+  emailSent: boolean;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminEbookStats {
+  totalOrders: number;
+  completedOrders: number;
+  totalRevenue: number;
+  totalEbooks: number;
+}
+
+export interface CreateEbookRequest {
+  title: string;
+  slug: string;
+  description?: string;
+  shortDescription?: string;
+  author: string;
+  authorBio?: string;
+  coverUrl?: string;
+  previewUrl?: string;
+  pageCount?: number;
+  publishedYear?: number;
+  isbn?: string;
+  isActive?: boolean;
+  isFeatured?: boolean;
+}
+
+export type UpdateEbookRequest = Partial<CreateEbookRequest>;
+
+export interface CreateVersionRequest {
+  label: string;
+  countryCode?: string;
+  countryName?: string;
+  region?: string;
+  price: number;
+  currency: string;
+  currencySymbol: string;
+  fileUrl?: string;
+  fileKey?: string;
+  fileSizeMb?: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export type UpdateVersionRequest = Partial<CreateVersionRequest>;
 

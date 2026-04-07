@@ -18,6 +18,10 @@ import SystemLogsPage from "../pages/system/SystemLogsPage";
 import SystemSettingsPage from "../pages/system/SystemSettingsPage";
 import AbusePage from "../pages/settings/AbusePage";
 import PlanContextsPage from "../pages/settings/PlanContextsPage";
+import EbooksPage from "../pages/ebooks/EbooksPage";
+import EbookCreatePage from "../pages/ebooks/EbookCreatePage";
+import EbookEditPage from "../pages/ebooks/EbookEditPage";
+import EbookDetailPage from "../pages/ebooks/EbookDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -82,6 +86,12 @@ export const router = createBrowserRouter([
           { path: "roles/:roleId", element: <RolesPage /> },
           { path: "admin-users", element: <AdminUsersPage /> },
           { path: "admin-users/:adminId", element: <AdminUsersPage /> },
+
+          /* Ebooks */
+          { path: "ebooks", element: <EbooksPage /> },
+          { path: "ebooks/create", element: <EbookCreatePage /> },
+          { path: "ebooks/:id", element: <EbookDetailPage /> },
+          { path: "ebooks/:id/edit", element: <EbookEditPage /> },
 
           /* Catch-all */
           {

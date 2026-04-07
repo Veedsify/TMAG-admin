@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "./api";
 import { getAuthCookie } from "./axios";
-import type { LoginRequest, CreditAdjustment } from "./types";
+import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookRequest, CreateVersionRequest, UpdateVersionRequest } from "./types";
 
 export const queryKeys = {
   currentUser: ["admin", "currentUser"] as const,
@@ -52,6 +52,9 @@ export const queryKeys = {
   companyCreditHistory: (companyId?: string) =>
     ["admin", "company-credits", "history", companyId] as const,
   planContexts: ["admin", "plan-contexts"] as const,
+  ebooks: ["admin", "ebooks"] as const,
+  ebookOrders: (ebookId?: number) => ["admin", "ebooks", "orders", ebookId] as const,
+  ebookStats: ["admin", "ebooks", "stats"] as const,
 };
 
 const extractData = <T>(response: { data: { data: T } }): T => {
@@ -549,6 +552,15 @@ export const useToggleMaintenanceMode = () => {
   });
 };
 
+export const useFetchLiveRates = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await adminApi.fetchLiveRates();
+      return extractData(response);
+    },
+  });
+};
+
 export const useRoles = () => {
   return useQuery({
     queryKey: queryKeys.roles,
@@ -717,5 +729,94 @@ export const useCompanyCreditHistory = (companyId?: string) => {
       return response.data.data;
     },
     enabled: !!companyId,
+  });
+};
+
+// ─── Ebook Hooks ──────────────────────────────────────────────
+
+export const useAdminEbooks = () => {
+  return useQuery({
+    queryKey: queryKeys.ebooks,
+    queryFn: () => adminApi.getEbooks(),
+  });
+};
+
+export const useAdminEbookStats = () => {
+  return useQuery({
+    queryKey: queryKeys.ebookStats,
+    queryFn: () => adminApi.getEbookStats(),
+  });
+};
+
+export const useAdminEbookOrders = (ebookId: number) => {
+  return useQuery({
+    queryKey: queryKeys.ebookOrders(ebookId),
+    queryFn: () => adminApi.getEbookOrders(ebookId),
+    enabled: !!ebookId,
+  });
+};
+
+export const useAdminAllEbookOrders = () => {
+  return useQuery({
+    queryKey: queryKeys.ebookOrders(),
+    queryFn: () => adminApi.getAllEbookOrders(),
+  });
+};
+
+export const useAdminCreateEbook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateEbookRequest) => adminApi.createEbook(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useAdminUpdateEbook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateEbookRequest }) =>
+      adminApi.updateEbook(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useAdminDeleteEbook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deleteEbook(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useAdminAddVersion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ebookId, data }: { ebookId: number; data: CreateVersionRequest }) =>
+      adminApi.addVersion(ebookId, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useAdminUpdateVersion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ebookId, versionId, data }: { ebookId: number; versionId: number; data: UpdateVersionRequest }) =>
+      adminApi.updateVersion(ebookId, versionId, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useAdminDeleteVersion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ebookId, versionId }: { ebookId: number; versionId: number }) =>
+      adminApi.deleteVersion(ebookId, versionId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.ebooks }),
+  });
+};
+
+export const useUploadEbookPdf = () => {
+  return useMutation({
+    mutationFn: (file: File) => adminApi.uploadEbookPdf(file),
   });
 };

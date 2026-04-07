@@ -16,9 +16,20 @@ const defaultSettings: SystemSettings = {
   emailNotifications: true,
   maxEmployeesPerCompany: 100,
   revenueBaseCurrency: "USD",
-  exchangeRateNGN: 1,
-  exchangeRateEUR: 1,
-  exchangeRateGBP: 1,
+  exchangeRateNGN: 1550,
+  exchangeRateEUR: 0.92,
+  exchangeRateGBP: 0.79,
+  exchangeRateINR: 83.5,
+  exchangeRateCAD: 1.36,
+  exchangeRateAUD: 1.53,
+  exchangeRateKES: 153,
+  exchangeRateZAR: 18.2,
+  exchangeRateGHS: 14.5,
+  exchangeRateJPY: 149.5,
+  exchangeRateBRL: 5.05,
+  exchangeRateAED: 3.67,
+  exchangeRateSGD: 1.34,
+  exchangeRateCHF: 0.88,
 };
 
 export default function SettingsPage() {

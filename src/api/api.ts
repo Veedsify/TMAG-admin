@@ -24,6 +24,13 @@ import type {
   CompanyCreditPurchase,
   InitiatePurchaseResponse,
   PlanGenerationContext,
+  AdminEbook,
+  AdminEbookOrder,
+  AdminEbookStats,
+  CreateEbookRequest,
+  UpdateEbookRequest,
+  CreateVersionRequest,
+  UpdateVersionRequest,
 } from "./types";
 
 export const adminApi = {
@@ -113,6 +120,7 @@ export const adminApi = {
   updateSystemSettings: (data: Partial<SystemSettings>) =>
     api.put<ApiResponse<SystemSettings>>("/admin/system/settings", data),
   toggleMaintenanceMode: () => api.post("/admin/system/settings/toggle-maintenance"),
+  fetchLiveRates: () => api.post<ApiResponse<{ rates: Record<string, number>; lastFetched: string }>>("/admin/system/settings/fetch-live-rates"),
 
   // Roles - /admin/roles/*
   getRoles: () => api.get<ApiResponse<AdminRole[]>>("/admin/roles"),
@@ -136,45 +144,74 @@ export const adminApi = {
 
   // ─── HR Management (standard authenticated endpoints) ───────
 
-  // Employees - /v1/employees/*
+  // Employees - /employees/*
   hrGetEmployees: (companyId?: string) =>
-    api.get("/v1/employees", { params: companyId ? { companyId } : {} }),
+    api.get("/employees", { params: companyId ? { companyId } : {} }),
   hrCreateEmployee: (data: HRCreateEmployeeRequest) =>
-    api.post("/v1/employees", data),
+    api.post("/employees", data),
   hrUpdateEmployee: (id: string, data: Partial<HRCreateEmployeeRequest>) =>
-    api.put(`/v1/employees/${id}`, data),
+    api.put(`/employees/${id}`, data),
   hrDeleteEmployee: (id: string) =>
-    api.delete(`/v1/employees/${id}`),
+    api.delete(`/employees/${id}`),
   hrAllocateCredits: (id: string, creditsAllocated: number) =>
-    api.put(`/v1/employees/${id}/credits`, { creditsAllocated }),
+    api.put(`/employees/${id}/credits`, { creditsAllocated }),
   hrUpdateEmployeeStatus: (id: string, status: "active" | "inactive") =>
-    api.put(`/v1/employees/${id}/status`, { status }),
+    api.put(`/employees/${id}/status`, { status }),
 
-  // Travel Requests - /v1/travel-requests/*
+  // Travel Requests - /travel-requests/*
   hrGetTravelRequests: (companyId?: string) =>
-    api.get("/v1/travel-requests", { params: companyId ? { companyId } : {} }),
+    api.get("/travel-requests", { params: companyId ? { companyId } : {} }),
   hrApproveTravelRequest: (id: string) =>
-    api.post(`/v1/travel-requests/${id}/approve`),
+    api.post(`/travel-requests/${id}/approve`),
   hrRejectTravelRequest: (id: string) =>
-    api.post(`/v1/travel-requests/${id}/reject`),
+    api.post(`/travel-requests/${id}/reject`),
 
-  // Credits - /v1/companies/:id/purchase-credits
+  // Credits - /companies/:id/purchase-credits
   hrPurchaseCredits: (companyId: string, amount: number, reference?: string) =>
-    api.post(`/v1/companies/${companyId}/purchase-credits`, { amount, reference }),
+    api.post(`/companies/${companyId}/purchase-credits`, { amount, reference }),
   hrGetCreditLedger: (companyId: string) =>
-    api.get("/v1/credits", { params: { companyId } }),
+    api.get("/credits", { params: { companyId } }),
 
-  // Company Admin Credit Purchase - /v1/company-admin/credits/*
+  // Company Admin Credit Purchase - /company-admin/credits/*
   getCompanyPricing: (companyId: string) =>
-    api.get<ApiResponse<CompanyPricing>>(`/v1/company-admin/credits/pricing`, { params: { companyId } }),
+    api.get<ApiResponse<CompanyPricing>>(`/company-admin/credits/pricing`, { params: { companyId } }),
   getCompanyCreditQuote: (companyId: string, credits: number) =>
-    api.post<ApiResponse<CompanyCreditQuote>>(`/v1/company-admin/credits/quote`, null, { params: { companyId, credits } }),
+    api.post<ApiResponse<CompanyCreditQuote>>(`/company-admin/credits/quote`, null, { params: { companyId, credits } }),
   initiateCompanyCreditPurchase: (companyId: string, credits: number) =>
-    api.post<ApiResponse<InitiatePurchaseResponse>>(`/v1/company-admin/credits/purchase`, { companyId, credits }),
+    api.post<ApiResponse<InitiatePurchaseResponse>>(`/company-admin/credits/purchase`, { companyId, credits }),
   verifyCompanyCreditPurchase: (txRef: string, transactionId?: string) =>
-    api.get<ApiResponse<{ success: boolean; purchase: CompanyCreditPurchase }>>(`/v1/company-admin/credits/verify/${txRef}`, { params: transactionId ? { transaction_id: transactionId } : {} }),
+    api.get<ApiResponse<{ success: boolean; purchase: CompanyCreditPurchase }>>(`/company-admin/credits/verify/${txRef}`, { params: transactionId ? { transaction_id: transactionId } : {} }),
   getCompanyCreditHistory: (companyId?: string) =>
-    api.get<ApiResponse<CompanyCreditPurchase[]>>(`/v1/company-admin/credits/history`, { params: companyId ? { companyId } : {} }),
+    api.get<ApiResponse<CompanyCreditPurchase[]>>(`/company-admin/credits/history`, { params: companyId ? { companyId } : {} }),
   getCompanyCreditPurchase: (txRef: string) =>
-    api.get<ApiResponse<CompanyCreditPurchase>>(`/v1/company-admin/credits/${txRef}`),
+    api.get<ApiResponse<CompanyCreditPurchase>>(`/company-admin/credits/${txRef}`),
+
+  // Ebooks - /api/admin/ebooks/*
+  getEbooks: () =>
+    api.get<ApiResponse<AdminEbook[]>>("/admin/ebooks").then(r => r.data.data),
+  createEbook: (data: CreateEbookRequest) =>
+    api.post<ApiResponse<AdminEbook>>("/admin/ebooks", data).then(r => r.data.data),
+  updateEbook: (id: number, data: UpdateEbookRequest) =>
+    api.put<ApiResponse<AdminEbook>>(`/admin/ebooks/${id}`, data).then(r => r.data.data),
+  deleteEbook: (id: number) =>
+    api.delete(`/admin/ebooks/${id}`),
+  addVersion: (ebookId: number, data: CreateVersionRequest) =>
+    api.post<ApiResponse<AdminEbook>>(`/admin/ebooks/${ebookId}/versions`, data).then(r => r.data.data),
+  updateVersion: (ebookId: number, versionId: number, data: UpdateVersionRequest) =>
+    api.put<ApiResponse<AdminEbook>>(`/admin/ebooks/${ebookId}/versions/${versionId}`, data).then(r => r.data.data),
+  deleteVersion: (ebookId: number, versionId: number) =>
+    api.delete(`/admin/ebooks/${ebookId}/versions/${versionId}`),
+  getEbookOrders: (ebookId: number) =>
+    api.get<ApiResponse<AdminEbookOrder[]>>(`/admin/ebooks/${ebookId}/orders`).then(r => r.data.data),
+  getAllEbookOrders: () =>
+    api.get<ApiResponse<AdminEbookOrder[]>>("/admin/ebooks/orders").then(r => r.data.data),
+  getEbookStats: () =>
+    api.get<ApiResponse<AdminEbookStats>>("/admin/ebooks/stats").then(r => r.data.data),
+  uploadEbookPdf: (file: File) => {
+    const data = new FormData();
+    data.append("file", file);
+    return api.post<ApiResponse<{ fileUrl: string; fileKey: string; fileSizeMb: number; fileName: string }>>("/admin/ebooks/upload-pdf", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then(r => r.data.data);
+  },
 };
