@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
 import { adminApi } from "../../api/api";
 import { setAuthCookie } from "../../api/axios";
+import { queryKeys } from "../../api";
 import { AxiosError } from "axios";
 
 export default function LoginPage() {
@@ -14,6 +16,7 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const login = useAdminAuthStore((s) => s.login);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,6 +32,7 @@ export default function LoginPage() {
             const response = await adminApi.login({ email, password });
             const { token, exp, user } = response.data.data;
             setAuthCookie(token, exp);
+            queryClient.setQueryData(queryKeys.currentUser, user);
             login({
                 id: String(user.id),
                 name: user.name,

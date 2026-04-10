@@ -58,6 +58,8 @@ export default function AnalyticsPage() {
     monthlyRequests: [],
     dailyActiveUsers: [],
     creditUsageByType: [],
+    requestsByModel: [],
+    riskDistribution: [],
   };
 
   const stats: DashboardStats = statsData ?? {
@@ -103,16 +105,9 @@ export default function AnalyticsPage() {
     { name: "Individual", value: analytics.corporateVsIndividual?.individual ?? 0 },
   ];
 
-  const modelData = [
-    { model: "gpt-4o-mini", requests: 9 },
-    { model: "gpt-4o", requests: 3 },
-  ];
+  const modelData = analytics.requestsByModel ?? [];
 
-  const riskDistribution = [
-    { risk: "Low", count: 6 },
-    { risk: "Medium", count: 3 },
-    { risk: "High", count: 3 },
-  ];
+  const riskDistribution = analytics.riskDistribution ?? [];
 
   const paidInvoices = invoices.filter((i) => i.status === "paid");
   const paidByCurrency = sumInvoicesByCurrency(paidInvoices);

@@ -189,6 +189,8 @@ export interface AnalyticsData {
   monthlyRequests: { month: string; requests: number; revenue: number }[];
   dailyActiveUsers: { day: string; users: number }[];
   creditUsageByType: { type: string; used: number; remaining: number }[];
+  requestsByModel: { model: string; requests: number }[];
+  riskDistribution: { risk: string; count: number }[];
 }
 
 // Billing
