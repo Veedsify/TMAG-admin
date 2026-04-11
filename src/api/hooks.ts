@@ -55,6 +55,8 @@ export const queryKeys = {
   ebooks: ["admin", "ebooks"] as const,
   ebookOrders: (ebookId?: number) => ["admin", "ebooks", "orders", ebookId] as const,
   ebookStats: ["admin", "ebooks", "stats"] as const,
+  companyOnboarding: (status?: string) => ["admin", "company-onboarding", status] as const,
+  companyOnboardingDetail: (id: number) => ["admin", "company-onboarding", id] as const,
 };
 
 const extractData = <T>(response: { data: { data: T } }): T => {
@@ -818,5 +820,45 @@ export const useAdminDeleteVersion = () => {
 export const useUploadEbookPdf = () => {
   return useMutation({
     mutationFn: (file: File) => adminApi.uploadEbookPdf(file),
+  });
+};
+
+// ============ Company Onboarding Hooks ============
+
+export const useCompanyOnboardingRequests = (status?: string) => {
+  return useQuery({
+    queryKey: queryKeys.companyOnboarding(status),
+    queryFn: () => adminApi.getCompanyOnboardingRequests(status),
+  });
+};
+
+export const useCompanyOnboardingRequest = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.companyOnboardingDetail(id),
+    queryFn: () => adminApi.getCompanyOnboardingRequest(id),
+    enabled: id > 0,
+  });
+};
+
+export const useApproveCompanyOnboarding = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, adminEmail }: { id: number; adminEmail?: string }) =>
+      adminApi.approveCompanyOnboarding(id, adminEmail),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "company-onboarding"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies });
+    },
+  });
+};
+
+export const useRejectCompanyOnboarding = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason, adminEmail }: { id: number; reason: string; adminEmail?: string }) =>
+      adminApi.rejectCompanyOnboarding(id, reason, adminEmail),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "company-onboarding"] });
+    },
   });
 };

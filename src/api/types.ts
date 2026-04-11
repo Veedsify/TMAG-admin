@@ -501,3 +501,35 @@ export interface CreateVersionRequest {
 
 export type UpdateVersionRequest = Partial<CreateVersionRequest>;
 
+// ============ Company Onboarding ============
+
+export interface AdminOnboardingTeamMember {
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface CompanyOnboardingRequest {
+  id: number;
+  companyName: string;
+  industry: string;
+  contactEmail: string;
+  contactPhone: string;
+  website: string;
+  billingCurrency: string;
+  selectedPlanCode: string;
+  sampleRequest: string;
+  teamMembers: AdminOnboardingTeamMember[];
+  txRef: string;
+  paymentStatus: string;
+  paymentAmount: number;
+  paymentCurrency: string;
+  status: string;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdCompanyId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

@@ -22,6 +22,7 @@ import {
     Bell,
     FileUp,
     BookOpen,
+    ClipboardList,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
@@ -33,6 +34,7 @@ const navItems: { to: string; icon: ElementType; label: string }[] = [
     { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/companies", icon: Building2, label: "Companies" },
+    { to: "/admin/company-registrations", icon: ClipboardList, label: "Registrations" },
     { to: "/admin/ledger", icon: CreditCard, label: "Credit Ledger" },
     { to: "/admin/billing", icon: Receipt, label: "Billing" },
     { to: "/admin/ai-logs", icon: Bot, label: "AI Requests" },

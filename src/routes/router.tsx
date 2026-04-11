@@ -22,6 +22,7 @@ import EbooksPage from "../pages/ebooks/EbooksPage";
 import EbookCreatePage from "../pages/ebooks/EbookCreatePage";
 import EbookEditPage from "../pages/ebooks/EbookEditPage";
 import EbookDetailPage from "../pages/ebooks/EbookDetailPage";
+import CompanyOnboardingPage from "../pages/company-onboarding/CompanyOnboardingPage";
 
 export const router = createBrowserRouter([
   {
@@ -92,6 +93,9 @@ export const router = createBrowserRouter([
           { path: "ebooks/create", element: <EbookCreatePage /> },
           { path: "ebooks/:id", element: <EbookDetailPage /> },
           { path: "ebooks/:id/edit", element: <EbookEditPage /> },
+
+          /* Company Onboarding */
+          { path: "company-registrations", element: <CompanyOnboardingPage /> },
 
           /* Catch-all */
           {

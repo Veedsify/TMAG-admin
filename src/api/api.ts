@@ -214,4 +214,16 @@ export const adminApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }).then(r => r.data.data);
   },
+
+  // Company Onboarding - /admin/company-onboarding/*
+  getCompanyOnboardingRequests: (status?: string) =>
+    api.get<ApiResponse<import("./types").CompanyOnboardingRequest[]>>("/admin/company-onboarding", {
+      params: status ? { status } : undefined,
+    }).then(r => r.data.data),
+  getCompanyOnboardingRequest: (id: number) =>
+    api.get<ApiResponse<import("./types").CompanyOnboardingRequest>>(`/admin/company-onboarding/${id}`).then(r => r.data.data),
+  approveCompanyOnboarding: (id: number, adminEmail?: string) =>
+    api.post<ApiResponse<import("./types").CompanyOnboardingRequest>>(`/admin/company-onboarding/${id}/approve`, { adminEmail }).then(r => r.data.data),
+  rejectCompanyOnboarding: (id: number, reason: string, adminEmail?: string) =>
+    api.post<ApiResponse<import("./types").CompanyOnboardingRequest>>(`/admin/company-onboarding/${id}/reject`, { reason, adminEmail }).then(r => r.data.data),
 };
