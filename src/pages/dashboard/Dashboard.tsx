@@ -146,6 +146,8 @@ function defaultAnalytics(): AnalyticsData {
         monthlyRequests: [],
         dailyActiveUsers: [],
         creditUsageByType: [],
+        requestsByModel: [],
+        riskDistribution: [],
     };
 }
 
@@ -182,7 +184,7 @@ function QuickLinkCard({ to, label, description, badge, badgeVariant = "neutral"
                     >
                         {typeof badge === "number" ? badge.toLocaleString() : badge}
                     </span>
-                :   null}
+                    : null}
                 <ArrowRight className="w-4 h-4 text-muted group-hover:text-accent transition-colors" />
             </div>
         </Link>
@@ -235,7 +237,7 @@ export default function Dashboard() {
     const creditUtilPct =
         stats.totalCreditsIssued > 0 ?
             Math.round((stats.totalCreditsConsumed / stats.totalCreditsIssued) * 1000) / 10
-        :   0;
+            : 0;
 
     const pieData = [
         { name: "Corporate", value: analytics.corporateVsIndividual?.corporate ?? 0 },
@@ -267,7 +269,7 @@ export default function Dashboard() {
                 </div>
                 {statsLoading ?
                     <div className="h-8 w-44 rounded-xl bg-border-light/50 animate-pulse" />
-                :   <SystemHealthBadge status={stats.systemHealthStatus} />}
+                    : <SystemHealthBadge status={stats.systemHealthStatus} />}
             </div>
 
             {showAttentionBanner && !statsLoading ?
@@ -276,7 +278,7 @@ export default function Dashboard() {
                         "rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
                         unresolvedFromStats > 0 || failed7d >= 10 ?
                             "border-warning/30 bg-warning/5"
-                        :   "border-border-light bg-background-primary",
+                            : "border-border-light bg-background-primary",
                     )}
                 >
                     <div className="flex items-start gap-3">
@@ -294,13 +296,13 @@ export default function Dashboard() {
                                         {unresolvedFromStats} unresolved abuse{" "}
                                         {unresolvedFromStats === 1 ? "flag" : "flags"}
                                     </li>
-                                :   null}
+                                    : null}
                                 {failed7d >= 5 ?
                                     <li>{failed7d} failed AI calls in the last 7 days</li>
-                                :   null}
+                                    : null}
                                 {flaggedPlansCount > 0 ?
                                     <li>{flaggedPlansCount} flagged travel plans</li>
-                                :   null}
+                                    : null}
                             </ul>
                         </div>
                     </div>
@@ -312,7 +314,7 @@ export default function Dashboard() {
                             >
                                 Review flags <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                        :   null}
+                            : null}
                         {failed7d >= 5 ?
                             <Link
                                 to="/admin/ai-logs/failures"
@@ -320,7 +322,7 @@ export default function Dashboard() {
                             >
                                 View failures <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                        :   null}
+                            : null}
                         {flaggedPlansCount > 0 ?
                             <Link
                                 to="/admin/plans"
@@ -328,10 +330,10 @@ export default function Dashboard() {
                             >
                                 Open plans <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
-                        :   null}
+                            : null}
                     </div>
                 </div>
-            :   null}
+                : null}
 
             <section>
                 <h2 className="text-xs uppercase tracking-widest text-muted mb-3">
@@ -340,7 +342,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     {statsLoading ?
                         Array.from({ length: 8 }).map((_, i) => <StatSkeleton key={i} />)
-                    :   <>
+                        : <>
                             <StatCard
                                 label="Active users"
                                 value={stats.totalUsers.toLocaleString()}
@@ -409,7 +411,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     {statsLoading ?
                         Array.from({ length: 6 }).map((_, i) => <StatSkeleton key={`ai-${i}`} />)
-                    :   <>
+                        : <>
                             <StatCard
                                 label="AI requests today"
                                 value={stats.aiRequestsToday.toLocaleString()}
@@ -516,7 +518,7 @@ export default function Dashboard() {
                             <LucideLoader2 className="w-6 h-6 animate-spin text-accent mr-2" />
                             Loading trends…
                         </div>
-                    :   <div className="h-60">
+                        : <div className="h-60">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={analytics.monthlyRequests}>
                                     <CartesianGrid
@@ -589,7 +591,7 @@ export default function Dashboard() {
                             <LucideLoader2 className="w-6 h-6 animate-spin text-accent mr-2" />
                             Loading…
                         </div>
-                    :   <div className="h-60">
+                        : <div className="h-60">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RechartsBarChart
                                     data={analytics.topDestinations.slice(0, 6)}
@@ -639,7 +641,7 @@ export default function Dashboard() {
                         <div className="h-52 flex items-center justify-center text-muted text-sm">
                             <LucideLoader2 className="w-5 h-5 animate-spin text-accent" />
                         </div>
-                    :   <div className="h-52">
+                        : <div className="h-52">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={analytics.dailyActiveUsers}>
                                     <defs>
@@ -684,7 +686,7 @@ export default function Dashboard() {
                         <div className="h-52 flex items-center justify-center text-muted text-sm">
                             <LucideLoader2 className="w-5 h-5 animate-spin text-accent" />
                         </div>
-                    :   <div className="h-52">
+                        : <div className="h-52">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -725,7 +727,7 @@ export default function Dashboard() {
                         <div className="h-52 flex items-center justify-center text-muted text-sm">
                             <LucideLoader2 className="w-5 h-5 animate-spin text-accent" />
                         </div>
-                    :   <div className="h-52">
+                        : <div className="h-52">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RechartsBarChart
                                     data={analytics.creditUsageByType}
@@ -800,7 +802,7 @@ export default function Dashboard() {
                         </ResponsiveContainer>
                     </div>
                 </div>
-            :   null}
+                : null}
 
             <div className="bg-white rounded-2xl border border-border-light/50 p-6 lg:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
@@ -819,7 +821,7 @@ export default function Dashboard() {
                     <div className="flex justify-center py-12 text-muted text-sm">
                         <LucideLoader2 className="w-6 h-6 animate-spin text-accent" />
                     </div>
-                :   <div className="overflow-x-auto">
+                    : <div className="overflow-x-auto">
                         <table className="w-full text-sm min-w-[640px]">
                             <thead>
                                 <tr className="border-b border-border">
@@ -860,11 +862,11 @@ export default function Dashboard() {
                                                 className={cn(
                                                     "px-2.5 py-0.5 rounded-xl text-xs",
                                                     log.status === "success" &&
-                                                        "bg-success/10 text-success",
+                                                    "bg-success/10 text-success",
                                                     log.status === "error" &&
-                                                        "bg-danger/10 text-danger",
+                                                    "bg-danger/10 text-danger",
                                                     log.status === "flagged" &&
-                                                        "bg-warning/10 text-warning",
+                                                    "bg-warning/10 text-warning",
                                                 )}
                                             >
                                                 {log.status}
@@ -878,11 +880,11 @@ export default function Dashboard() {
                                                 className={cn(
                                                     "px-2.5 py-0.5 rounded-xl text-xs",
                                                     log.riskLevel === "low" &&
-                                                        "bg-success/10 text-success",
+                                                    "bg-success/10 text-success",
                                                     log.riskLevel === "medium" &&
-                                                        "bg-warning/10 text-warning",
+                                                    "bg-warning/10 text-warning",
                                                     log.riskLevel === "high" &&
-                                                        "bg-danger/10 text-danger",
+                                                    "bg-danger/10 text-danger",
                                                 )}
                                             >
                                                 {log.riskLevel}
@@ -917,7 +919,7 @@ export default function Dashboard() {
                     <div className="flex justify-center py-8">
                         <LucideLoader2 className="w-6 h-6 text-accent animate-spin" />
                     </div>
-                :   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    : <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-background-primary rounded-xl p-4 flex items-start gap-4">
                             <div className="w-9 h-9 rounded-lg bg-danger/10 flex items-center justify-center shrink-0">
                                 <ShieldAlert className="w-4.5 h-4.5 text-danger" />
@@ -955,7 +957,7 @@ export default function Dashboard() {
                             </div>
                             {recentWarnings.length === 0 ?
                                 <p className="text-xs text-brand-muted">No recent warnings</p>
-                            :   <ul className="space-y-1.5">
+                                : <ul className="space-y-1.5">
                                     {recentWarnings.map((log) => (
                                         <li
                                             key={log.id}
