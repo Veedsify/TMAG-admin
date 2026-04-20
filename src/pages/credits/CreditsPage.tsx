@@ -8,7 +8,6 @@ import {
   Loader2,
   ArrowRight,
   History,
-  Tag,
   ChevronDown,
   X,
 } from "lucide-react";
@@ -120,7 +119,12 @@ export default function CreditsPage() {
         companyId: selectedCompanyId,
         credits,
       });
-      setQuote(result.data?.data || null);
+      const quoteData = result.data?.data || null;
+      setQuote(quoteData);
+      if (quoteData?.qualifiesForContactSales) {
+        window.location.href = "/contact";
+        return;
+      }
       setStep("review");
     } catch (err: any) {
       setErrorMsg(err?.response?.data?.message || "Failed to get quote");
@@ -302,32 +306,50 @@ export default function CreditsPage() {
 
               {/* Company Info */}
               {pricing && (
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-background-primary rounded-xl p-3">
-                    <p className="text-xs text-muted">Currency</p>
-                    <p className="text-sm font-semibold text-heading">
-                      {pricing.currency} ({pricing.currencySymbol})
-                    </p>
+                <div className="mt-4 space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-background-primary rounded-xl p-3">
+                      <p className="text-xs text-muted">Currency</p>
+                      <p className="text-sm font-semibold text-heading">
+                        {pricing.currency} ({pricing.currencySymbol})
+                      </p>
+                    </div>
+                    <div className="bg-background-primary rounded-xl p-3">
+                      <p className="text-xs text-muted">Historical Purchases</p>
+                      <p className="text-sm font-semibold text-heading">
+                        {pricing.historicalCreditsPurchased.toLocaleString()} credits
+                      </p>
+                    </div>
+                    <div className="bg-background-primary rounded-xl p-3">
+                      <p className="text-xs text-muted">Your Tier</p>
+                      <p className="text-sm font-semibold text-heading">
+                        {pricing.appliedTier === "TIER_3" || pricing.appliedTier === "TIER_3_PLUS"
+                          ? "Tier 3"
+                          : pricing.appliedTier === "TIER_2"
+                          ? "Tier 2"
+                          : "Tier 1"}
+                      </p>
+                    </div>
+                    <div className="bg-background-primary rounded-xl p-3">
+                      <p className="text-xs text-muted">Price per Credit</p>
+                      <p className="text-sm font-semibold text-heading">
+                        {pricing.currencySymbol}
+                        {pricing.pricePerCredit.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-background-primary rounded-xl p-3">
-                    <p className="text-xs text-muted">Per Credit</p>
-                    <p className="text-sm font-semibold text-heading">
-                      {pricing.currencySymbol}
-                      {pricing.pricePerCredit.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-background-primary rounded-xl p-3">
-                    <p className="text-xs text-muted">Total Credits</p>
-                    <p className="text-sm font-semibold text-heading">
-                      {pricing.totalCredits.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-background-primary rounded-xl p-3">
-                    <p className="text-xs text-muted">Used Credits</p>
-                    <p className="text-sm font-semibold text-heading">
-                      {pricing.usedCredits.toLocaleString()}
-                    </p>
-                  </div>
+
+                  {/* Contact Sales Banner */}
+                  {pricing.qualifiesForContactSales && (
+                    <div className="bg-accent/10 border border-accent/30 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-accent">
+                        You've purchased {pricing.historicalCreditsPurchased.toLocaleString()}+ credits!
+                      </p>
+                      <p className="text-xs text-muted mt-1">
+                        Contact our sales team for custom pricing on your next purchase.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -339,27 +361,38 @@ export default function CreditsPage() {
                   Select Credit Quantity
                 </h2>
 
+                {/* Tier Pricing Table */}
+                <div className="mb-6 p-4 bg-background-primary rounded-xl">
+                  <p className="text-xs text-muted mb-2 font-medium">Tier Pricing</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      pricing.appliedTier === "TIER_1" ? "bg-accent/10 border border-accent" : ""
+                    )}>
+                      <p className="text-xs text-muted">1-{pricing.tier1MaxCredits} credits</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier1}</p>
+                    </div>
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      pricing.appliedTier === "TIER_2" ? "bg-accent/10 border border-accent" : ""
+                    )}>
+                      <p className="text-xs text-muted">{pricing.tier1MaxCredits + 1}-{pricing.tier2MaxCredits} credits</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier2}</p>
+                    </div>
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      pricing.appliedTier === "TIER_3" || pricing.appliedTier === "TIER_3_PLUS" ? "bg-accent/10 border border-accent" : ""
+                    )}>
+                      <p className="text-xs text-muted">{pricing.tier2MaxCredits + 1}+ credits</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier3}</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Quick select packages */}
                 <div className="grid grid-cols-3 gap-3 mb-6">
                   {[50, 100, 200].map((qty) => {
                     const baseTotal = qty * pricing.pricePerCredit;
-                    let discountLabel = "";
-                    if (
-                      pricing.discountTier3Threshold &&
-                      baseTotal >= pricing.discountTier3Threshold
-                    ) {
-                      discountLabel = "Best Value!";
-                    } else if (
-                      pricing.discountTier2Threshold &&
-                      baseTotal >= pricing.discountTier2Threshold
-                    ) {
-                      discountLabel = "Great Discount!";
-                    } else if (
-                      pricing.discountTier1Threshold &&
-                      baseTotal >= pricing.discountTier1Threshold
-                    ) {
-                      discountLabel = "Bulk Discount!";
-                    }
 
                     return (
                       <button
@@ -376,11 +409,6 @@ export default function CreditsPage() {
                             : "border-border hover:border-accent/50"
                         )}
                       >
-                        {discountLabel && (
-                          <span className="absolute -top-2 right-2 px-2 py-0.5 bg-accent text-white text-[10px] font-semibold rounded-full">
-                            {discountLabel}
-                          </span>
-                        )}
                         <span className="text-2xl font-serif text-heading block">
                           {qty}
                         </span>
@@ -401,8 +429,7 @@ export default function CreditsPage() {
                   </label>
                   <input
                     type="number"
-                    min={pricing.minCredits}
-                    max={pricing.maxCredits}
+                    min={1}
                     value={credits}
                     onChange={(e) => {
                       setCredits(parseInt(e.target.value) || 0);
@@ -411,48 +438,13 @@ export default function CreditsPage() {
                     }}
                     className="w-32 px-3 py-2 bg-background-primary border border-border rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
                   />
-                  <span className="text-xs text-muted">
-                    Min: {pricing.minCredits} / Max: {pricing.maxCredits}
-                  </span>
-                </div>
-
-                {/* Volume Discount Info */}
-                <div className="mt-4 space-y-1">
-                  {pricing.discountTier1Threshold && (
-                    <p className="text-xs text-muted flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      Spend {sym}
-                      {pricing.discountTier1Threshold.toLocaleString()}+ save{" "}
-                      {sym}
-                      {pricing.discountTier1Amount?.toLocaleString()}
-                    </p>
-                  )}
-                  {pricing.discountTier2Threshold && (
-                    <p className="text-xs text-muted flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      Spend {sym}
-                      {pricing.discountTier2Threshold.toLocaleString()}+ save{" "}
-                      {sym}
-                      {pricing.discountTier2Amount?.toLocaleString()}
-                    </p>
-                  )}
-                  {pricing.discountTier3Threshold && (
-                    <p className="text-xs text-muted flex items-center gap-1">
-                      <Tag className="w-3 h-3" />
-                      Spend {sym}
-                      {pricing.discountTier3Threshold.toLocaleString()}+ save{" "}
-                      {sym}
-                      {pricing.discountTier3Amount?.toLocaleString()}
-                    </p>
-                  )}
                 </div>
 
                 <button
                   onClick={handleGetQuote}
                   disabled={
                     !selectedCompanyId ||
-                    credits < pricing.minCredits ||
-                    credits > pricing.maxCredits ||
+                    credits < 1 ||
                     quoteMutation.isPending
                   }
                   className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-accent text-white rounded-xl text-sm font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -517,6 +509,14 @@ export default function CreditsPage() {
                       {quote.pricePerCredit.toLocaleString()}
                     </span>
                   </div>
+                  {quote.appliedTier && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted">Applied Tier</span>
+                      <span className="text-accent font-medium">
+                        {quote.appliedTier}
+                      </span>
+                    </div>
+                  )}
                   <div className="border-t border-border pt-3 flex justify-between text-sm">
                     <span className="text-muted">Subtotal</span>
                     <span className="text-heading">
@@ -524,18 +524,6 @@ export default function CreditsPage() {
                       {quote.basePrice.toLocaleString()}
                     </span>
                   </div>
-                  {quote.discountAmount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-success flex items-center gap-1">
-                        <Tag className="w-3 h-3" />
-                        Discount ({quote.appliedDiscountTier})
-                      </span>
-                      <span className="text-success font-medium">
-                        -{quote.currencySymbol}
-                        {quote.discountAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
                   <div className="border-t border-border pt-3 flex justify-between">
                     <span className="text-heading font-semibold">Total</span>
                     <div className="text-right">
@@ -549,7 +537,18 @@ export default function CreditsPage() {
                     </div>
                   </div>
 
-                  {step === "review" && (
+                  {quote.qualifiesForContactSales && (
+                    <div className="mt-4 p-3 bg-accent/10 border border-accent/30 rounded-xl text-center">
+                      <p className="text-xs text-accent font-medium">
+                        500+ credits purchased historically
+                      </p>
+                      <p className="text-xs text-muted mt-1">
+                        Contact sales for custom pricing
+                      </p>
+                    </div>
+                  )}
+
+                  {step === "review" && !quote.qualifiesForContactSales && (
                     <button
                       onClick={handleInitiatePayment}
                       disabled={initiateMutation.isPending}

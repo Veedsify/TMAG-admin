@@ -290,16 +290,16 @@ export interface CompanyPricing {
   currency: "USD" | "NGN" | "EUR" | "GBP";
   currencySymbol: string;
   pricePerCredit: number;
-  minCredits: number;
-  maxCredits: number;
-  discountTier1Threshold: number | null;
-  discountTier1Amount: number | null;
-  discountTier2Threshold: number | null;
-  discountTier2Amount: number | null;
-  discountTier3Threshold: number | null;
-  discountTier3Amount: number | null;
-  totalCredits: number;
-  usedCredits: number;
+  appliedTier: string;
+  qualifiesForContactSales: boolean;
+  historicalCreditsPurchased: number;
+  basePricePerCreditUsd: number;
+  pricePerCreditTier1: number;
+  pricePerCreditTier2: number;
+  pricePerCreditTier3: number;
+  tier1MaxCredits: number;
+  tier2MaxCredits: number;
+  tier3MaxCredits: number;
 }
 
 export interface CompanyCreditQuote {
@@ -307,12 +307,12 @@ export interface CompanyCreditQuote {
   companyName: string;
   credits: number;
   basePrice: number;
-  discountAmount: number;
   totalAmount: number;
   currency: "USD" | "NGN" | "EUR" | "GBP";
   currencySymbol: string;
   pricePerCredit: number;
-  appliedDiscountTier: string | null;
+  appliedTier: string | null;
+  qualifiesForContactSales: boolean;
 }
 
 export interface CompanyCreditPurchase {
