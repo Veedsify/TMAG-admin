@@ -92,11 +92,11 @@ export default function DoctorsPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#008080]/10 flex items-center justify-center text-[#008080]">
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
                         <Stethoscope size={20} />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-heading">Doctor Management</h1>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-serif text-heading">Doctor Management</h1>
                         <p className="text-sm text-muted">Review applications and manage verified doctors</p>
                     </div>
                 </div>
@@ -110,12 +110,14 @@ export default function DoctorsPage() {
                     { label: "Approved Today", value: stats?.approvedToday ?? 0, icon: CheckCircle },
                     { label: "Validated Plans", value: stats?.totalValidatedPlans ?? 0, icon: Activity },
                 ].map((s) => (
-                    <div key={s.label} className="bg-white rounded-2xl border border-border-light p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                            <s.icon size={16} className="text-accent" />
-                            <span className="text-xs text-muted">{s.label}</span>
+                    <div key={s.label} className="bg-white rounded-2xl border border-border-light/50 p-4 sm:p-6 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-wider text-muted font-semibold">{s.label}</span>
+                            <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                                <s.icon className="w-4 h-4 text-accent" />
+                            </div>
                         </div>
-                        <p className="text-2xl font-bold text-heading">{s.value}</p>
+                        <p className="text-2xl sm:text-3xl font-serif text-heading">{s.value}</p>
                     </div>
                 ))}
             </div>
@@ -151,7 +153,7 @@ export default function DoctorsPage() {
                     placeholder={`Search ${activeTab}...`}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-border-light rounded-xl text-sm text-heading placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-border-light/50 rounded-xl text-sm text-heading placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30"
                 />
             </div>
 
@@ -166,7 +168,7 @@ export default function DoctorsPage() {
                         filteredApplications.map((app) => (
                             <div
                                 key={app.userId}
-                                className="bg-white rounded-2xl border border-border-light p-5 shadow-sm"
+                                className="bg-white rounded-2xl border border-border-light/50 p-5"
                             >
                                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                                     <div className="flex-1">
@@ -207,7 +209,7 @@ export default function DoctorsPage() {
                                                         onChange={(e) => setRejectionReason(e.target.value)}
                                                         placeholder="Rejection reason..."
                                                         rows={2}
-                                                        className="w-full px-3 py-2 text-xs border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+                                                        className="w-full px-3 py-2 text-xs border border-border-light/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
                                                     />
                                                     <div className="flex gap-2">
                                                         <button
@@ -219,7 +221,7 @@ export default function DoctorsPage() {
                                                         </button>
                                                         <button
                                                             onClick={() => { setRejectingId(null); setRejectionReason(""); }}
-                                                            className="py-1.5 px-3 border border-border-light text-xs rounded-lg hover:bg-button-secondary"
+                                                            className="py-1.5 px-3 border border-border-light/50 text-xs rounded-lg hover:bg-button-secondary"
                                                         >
                                                             Cancel
                                                         </button>
@@ -248,7 +250,7 @@ export default function DoctorsPage() {
                             </div>
                         ))
                     ) : (
-                        <div className="bg-white rounded-2xl border border-border-light p-12 text-center">
+                        <div className="bg-white rounded-2xl border border-border-light/50 p-12 text-center">
                             <ClipboardList size={40} className="mx-auto mb-3 text-muted/40" />
                             <p className="text-muted">No pending applications</p>
                         </div>
@@ -267,7 +269,7 @@ export default function DoctorsPage() {
                         filteredDoctors.map((doc) => (
                             <div
                                 key={doc.userId}
-                                className="bg-white rounded-2xl border border-border-light p-5 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                                className="bg-white rounded-2xl border border-border-light/50 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
@@ -286,7 +288,7 @@ export default function DoctorsPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <p className="text-lg font-bold text-heading">{doc.validatedPlansCount}</p>
+                                        <p className="text-2xl font-serif text-heading">{doc.validatedPlansCount}</p>
                                         <p className="text-xs text-muted">Validated Plans</p>
                                     </div>
                                     <button
@@ -300,7 +302,7 @@ export default function DoctorsPage() {
                             </div>
                         ))
                     ) : (
-                        <div className="bg-white rounded-2xl border border-border-light p-12 text-center">
+                        <div className="bg-white rounded-2xl border border-border-light/50 p-12 text-center">
                             <Users size={40} className="mx-auto mb-3 text-muted/40" />
                             <p className="text-muted">No verified doctors</p>
                         </div>
