@@ -862,3 +862,59 @@ export const useRejectCompanyOnboarding = () => {
     },
   });
 };
+
+// ============ Doctor Management Hooks ============
+
+export const useDoctorApplications = () => {
+  return useQuery({
+    queryKey: ["admin", "doctors", "applications"],
+    queryFn: () => adminApi.getDoctorApplications(),
+  });
+};
+
+export const useDoctors = () => {
+  return useQuery({
+    queryKey: ["admin", "doctors"],
+    queryFn: () => adminApi.getDoctors(),
+  });
+};
+
+export const useDoctorStats = () => {
+  return useQuery({
+    queryKey: ["admin", "doctors", "stats"],
+    queryFn: () => adminApi.getDoctorStats(),
+  });
+};
+
+export const useApproveDoctorApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, adminEmail }: { userId: number; adminEmail?: string }) =>
+      adminApi.approveDoctorApplication(userId, adminEmail),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "doctors"] });
+    },
+  });
+};
+
+export const useRejectDoctorApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, reason, adminEmail }: { userId: number; reason: string; adminEmail?: string }) =>
+      adminApi.rejectDoctorApplication(userId, reason, adminEmail),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "doctors"] });
+    },
+  });
+};
+
+export const useRevokeDoctor = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, adminEmail }: { userId: number; adminEmail?: string }) =>
+      adminApi.revokeDoctor(userId, adminEmail),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "doctors"] });
+    },
+  });
+};

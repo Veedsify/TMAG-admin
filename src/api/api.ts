@@ -31,6 +31,9 @@ import type {
   UpdateEbookRequest,
   CreateVersionRequest,
   UpdateVersionRequest,
+  AdminDoctorApplicationDto,
+  AdminDoctorListItemDto,
+  AdminDoctorStats,
 } from "./types";
 
 export const adminApi = {
@@ -226,4 +229,18 @@ export const adminApi = {
     api.post<ApiResponse<import("./types").CompanyOnboardingRequest>>(`/admin/company-onboarding/${id}/approve`, { adminEmail }).then(r => r.data.data),
   rejectCompanyOnboarding: (id: number, reason: string, adminEmail?: string) =>
     api.post<ApiResponse<import("./types").CompanyOnboardingRequest>>(`/admin/company-onboarding/${id}/reject`, { reason, adminEmail }).then(r => r.data.data),
+
+  // Doctors - /admin/doctors/*
+  getDoctorApplications: () =>
+    api.get<ApiResponse<AdminDoctorApplicationDto[]>>("/admin/doctors/applications").then(r => r.data.data),
+  getDoctors: () =>
+    api.get<ApiResponse<AdminDoctorListItemDto[]>>("/admin/doctors").then(r => r.data.data),
+  getDoctorStats: () =>
+    api.get<ApiResponse<AdminDoctorStats>>("/admin/doctors/stats").then(r => r.data.data),
+  approveDoctorApplication: (userId: number, adminEmail?: string) =>
+    api.post<ApiResponse<AdminDoctorApplicationDto>>(`/admin/doctors/applications/${userId}/approve`, { adminEmail }).then(r => r.data.data),
+  rejectDoctorApplication: (userId: number, reason: string, adminEmail?: string) =>
+    api.post<ApiResponse<AdminDoctorApplicationDto>>(`/admin/doctors/applications/${userId}/reject`, { reason, adminEmail }).then(r => r.data.data),
+  revokeDoctor: (userId: number, adminEmail?: string) =>
+    api.post<ApiResponse<AdminDoctorListItemDto>>(`/admin/doctors/${userId}/revoke`, { adminEmail }).then(r => r.data.data),
 };

@@ -533,3 +533,39 @@ export interface CompanyOnboardingRequest {
   updatedAt: string;
 }
 
+// ─── Doctor Management ───────────────────────────────────────
+
+export interface AdminDoctorApplicationDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
+  applicationStatus: string;
+  applicationSubmittedAt: string;
+  identityDocumentUrl: string | null;
+  licenseDocumentUrl: string | null;
+  createdAt: string;
+}
+
+export interface AdminDoctorListItemDto {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
+  validatedPlansCount: number;
+  createdAt: string;
+}
+
+export interface AdminDoctorStats {
+  totalDoctors: number;
+  pendingApplications: number;
+  approvedToday: number;
+  totalValidatedPlans: number;
+}
+
