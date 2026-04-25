@@ -24,6 +24,7 @@ import EbookEditPage from "../pages/ebooks/EbookEditPage";
 import EbookDetailPage from "../pages/ebooks/EbookDetailPage";
 import CompanyOnboardingPage from "../pages/company-onboarding/CompanyOnboardingPage";
 import DoctorsPage from "../pages/doctors/DoctorsPage";
+import ElevatedPlansPage from "../pages/plans/ElevatedPlansPage";
 
 export const router = createBrowserRouter([
   {
@@ -59,11 +60,12 @@ export const router = createBrowserRouter([
           { path: "ai-logs/high-usage", element: <AILogsPage /> },
           { path: "ai-logs/:logId", element: <AILogsPage /> },
 
-          /* Plans */
-          { path: "plans", element: <PlansPage /> },
-          { path: "plans/:planId", element: <PlansPage /> },
-          { path: "plans/:planId/archive", element: <PlansPage /> },
-          { path: "plans/:planId/delete", element: <PlansPage /> },
+           /* Plans */
+           { path: "plans", element: <PlansPage /> },
+           { path: "plans/:planId", element: <PlansPage /> },
+           { path: "plans/:planId/archive", element: <PlansPage /> },
+           { path: "plans/:planId/delete", element: <PlansPage /> },
+           { path: "elevated-plans", element: <ElevatedPlansPage /> },
 
           /* Analytics */
           { path: "analytics", element: <AnalyticsPage /> },

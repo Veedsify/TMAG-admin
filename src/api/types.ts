@@ -569,3 +569,18 @@ export interface AdminDoctorStats {
   totalValidatedPlans: number;
 }
 
+// ─── Elevated Plans ───────────────────────────────────────
+
+export interface ElevatedPlan {
+  id: string;
+  destination: string;
+  duration: string;
+  purpose: string;
+  riskScore: number;
+  travellerName: string;
+  travellerEmail: string;
+  reviewDoctorName: string;
+  doctorFeedback: string;
+  elevatedAt: string;
+}
+

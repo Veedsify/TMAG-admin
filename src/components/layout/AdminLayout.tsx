@@ -40,6 +40,7 @@ const navItems: { to: string; icon: ElementType; label: string }[] = [
     { to: "/admin/billing", icon: Receipt, label: "Billing" },
     { to: "/admin/ai-logs", icon: Bot, label: "AI Requests" },
     { to: "/admin/plans", icon: FileText, label: "User plans" },
+    { to: "/admin/elevated-plans", icon: ShieldAlert, label: "Elevated Plans" },
     { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/admin/system/status", icon: Server, label: "System Status" },
     { to: "/admin/system/logs", icon: AlertTriangle, label: "System Logs" },
