@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Search, ChevronDown, Loader2, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import StatCard from "../../components/StatCard";
 import { cn } from "../../lib/utils";
@@ -12,12 +12,13 @@ export default function ElevatedPlansPage() {
   const [search, setSearch] = useState("");
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchElevatedPlans = async () => {
       try {
         setIsLoading(true);
-        const response = await axiosInstance.get("/api/v1/admin/plans/elevated", {
+        const response = await axiosInstance.get("/admin/plans/elevated", {
           params: { page: 0, size: 50 },
         });
         setElevatedPlans(response.data.data?.content || []);
@@ -39,7 +40,7 @@ export default function ElevatedPlansPage() {
   const handleApprove = async (planId: string) => {
     try {
       setActionLoading(planId);
-      await axiosInstance.post(`/api/v1/admin/plans/${planId}/approve`);
+      await axiosInstance.post(`/admin/plans/${planId}/approve`);
       setElevatedPlans(elevatedPlans.filter((p) => p.id !== planId));
       setExpandedPlanId(null);
     } catch (error) {
@@ -52,13 +53,33 @@ export default function ElevatedPlansPage() {
   const handleReject = async (planId: string, reason: string) => {
     try {
       setActionLoading(planId);
-      await axiosInstance.post(`/api/v1/admin/plans/${planId}/reject`, { reason });
+      await axiosInstance.post(`/admin/plans/${planId}/reject`, { reason });
       setElevatedPlans(elevatedPlans.filter((p) => p.id !== planId));
       setExpandedPlanId(null);
     } catch (error) {
       console.error("Failed to reject plan:", error);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handlePreview = async (planId: string, type: "pdf" | "summary") => {
+    try {
+      setPreviewLoading(`${planId}:${type}`);
+      const endpoint =
+        type === "pdf"
+          ? `/admin/plans/${planId}/preview-pdf`
+          : `/admin/plans/${planId}/preview-summary`;
+      const response = await axiosInstance.get<Blob>(endpoint, {
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(response.data);
+      window.open(url, "_blank", "noopener");
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      console.error(`Failed to preview ${type}:`, error);
+    } finally {
+      setPreviewLoading(null);
     }
   };
 
@@ -179,6 +200,46 @@ export default function ElevatedPlansPage() {
                         <span className="font-medium">Traveller Email:</span>{" "}
                         {plan.travellerEmail}
                       </p>
+                      <p>
+                        <span className="font-medium">Elevated At:</span>{" "}
+                        {plan.elevatedAt
+                          ? new Date(plan.elevatedAt).toLocaleString()
+                          : "Not available"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 bg-white p-4">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                        Plan Previews
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handlePreview(plan.id, "pdf")}
+                          disabled={previewLoading === `${plan.id}:pdf`}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                        >
+                          {previewLoading === `${plan.id}:pdf` ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ExternalLink className="w-4 h-4" />
+                          )}
+                          Preview PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePreview(plan.id, "summary")}
+                          disabled={previewLoading === `${plan.id}:summary`}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm transition-colors"
+                        >
+                          {previewLoading === `${plan.id}:summary` ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ExternalLink className="w-4 h-4" />
+                          )}
+                          Preview Summary
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex gap-2 justify-end pt-4">

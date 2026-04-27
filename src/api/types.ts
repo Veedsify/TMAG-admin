@@ -581,6 +581,7 @@ export interface ElevatedPlan {
   travellerEmail: string;
   reviewDoctorName: string;
   doctorFeedback: string;
+  pdfPreviewUrl?: string | null;
+  summaryPreviewUrl?: string | null;
   elevatedAt: string;
 }
-
