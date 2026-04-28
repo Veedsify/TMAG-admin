@@ -252,6 +252,38 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
+function AdminFooter() {
+    return (
+        <footer className="lg:ml-64 border-t border-white/6">
+            <div className="px-4 sm:px-6 lg:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-7xl">
+                <p className="text-xs text-white/20">
+                    © {new Date().getFullYear()} TMAG · Travel Medicine Advisory
+                    Global. All rights reserved.
+                </p>
+                <div className="flex items-center gap-4">
+                    <a
+                        href="https://tmag.health/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                    >
+                        Privacy Policy
+                    </a>
+                    <span className="text-white/10">·</span>
+                    <a
+                        href="https://tmag.health/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-white/25 hover:text-white transition-colors duration-200"
+                    >
+                        Terms of Service
+                    </a>
+                </div>
+            </div>
+        </footer>
+    );
+}
+
 export default function AdminLayout() {
     return (
         <AuthGuard>
@@ -261,6 +293,7 @@ export default function AdminLayout() {
                     <AdminTopBar />
                     <Outlet />
                 </main>
+                <AdminFooter />
             </div>
         </AuthGuard>
     );

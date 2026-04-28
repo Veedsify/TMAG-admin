@@ -307,7 +307,7 @@ export default function CreditsPage() {
               {/* Company Info */}
               {pricing && (
                 <div className="mt-4 space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="bg-background-primary rounded-xl p-3">
                       <p className="text-xs text-muted">Currency</p>
                       <p className="text-sm font-semibold text-heading">
@@ -315,13 +315,7 @@ export default function CreditsPage() {
                       </p>
                     </div>
                     <div className="bg-background-primary rounded-xl p-3">
-                      <p className="text-xs text-muted">Historical Purchases</p>
-                      <p className="text-sm font-semibold text-heading">
-                        {pricing.historicalCreditsPurchased.toLocaleString()} credits
-                      </p>
-                    </div>
-                    <div className="bg-background-primary rounded-xl p-3">
-                      <p className="text-xs text-muted">Your Tier</p>
+                      <p className="text-xs text-muted">Applied Tier</p>
                       <p className="text-sm font-semibold text-heading">
                         {pricing.appliedTier === "TIER_3" || pricing.appliedTier === "TIER_3_PLUS"
                           ? "Tier 3"
@@ -343,7 +337,7 @@ export default function CreditsPage() {
                   {pricing.qualifiesForContactSales && (
                     <div className="bg-accent/10 border border-accent/30 rounded-xl p-4">
                       <p className="text-sm font-semibold text-accent">
-                        You've purchased {pricing.historicalCreditsPurchased.toLocaleString()}+ credits!
+                        500+ credits — Custom pricing available
                       </p>
                       <p className="text-xs text-muted mt-1">
                         Contact our sales team for custom pricing on your next purchase.
@@ -363,28 +357,28 @@ export default function CreditsPage() {
 
                 {/* Tier Pricing Table */}
                 <div className="mb-6 p-4 bg-background-primary rounded-xl">
-                  <p className="text-xs text-muted mb-2 font-medium">Tier Pricing</p>
+                  <p className="text-xs text-muted mb-2 font-medium">Volume Pricing (per credit)</p>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className={cn(
                       "p-2 rounded-lg",
                       pricing.appliedTier === "TIER_1" ? "bg-accent/10 border border-accent" : ""
                     )}>
-                      <p className="text-xs text-muted">1-{pricing.tier1MaxCredits} credits</p>
-                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier1}</p>
+                      <p className="text-xs text-muted">1–{pricing.tier1MaxCredits} credits</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.standardTier1Price}</p>
                     </div>
                     <div className={cn(
                       "p-2 rounded-lg",
                       pricing.appliedTier === "TIER_2" ? "bg-accent/10 border border-accent" : ""
                     )}>
-                      <p className="text-xs text-muted">{pricing.tier1MaxCredits + 1}-{pricing.tier2MaxCredits} credits</p>
-                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier2}</p>
+                      <p className="text-xs text-muted">{pricing.tier1MaxCredits + 1}–{pricing.tier2MaxCredits} credits</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.standardTier2Price}</p>
                     </div>
                     <div className={cn(
                       "p-2 rounded-lg",
                       pricing.appliedTier === "TIER_3" || pricing.appliedTier === "TIER_3_PLUS" ? "bg-accent/10 border border-accent" : ""
                     )}>
                       <p className="text-xs text-muted">{pricing.tier2MaxCredits + 1}+ credits</p>
-                      <p className="text-sm font-semibold text-heading">{sym}{pricing.pricePerCreditTier3}</p>
+                      <p className="text-sm font-semibold text-heading">{sym}{pricing.standardTier3Price}</p>
                     </div>
                   </div>
                 </div>

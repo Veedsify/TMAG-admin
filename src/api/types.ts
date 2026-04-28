@@ -292,11 +292,12 @@ export interface CompanyPricing {
   pricePerCredit: number;
   appliedTier: string;
   qualifiesForContactSales: boolean;
-  historicalCreditsPurchased: number;
-  basePricePerCreditUsd: number;
-  pricePerCreditTier1: number;
-  pricePerCreditTier2: number;
-  pricePerCreditTier3: number;
+  standardTier1Price: number;
+  standardTier2Price: number;
+  standardTier3Price: number;
+  premiumTier1Price: number;
+  premiumTier2Price: number;
+  premiumTier3Price: number;
   tier1MaxCredits: number;
   tier2MaxCredits: number;
   tier3MaxCredits: number;
