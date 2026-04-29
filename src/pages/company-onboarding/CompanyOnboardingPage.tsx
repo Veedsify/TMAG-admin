@@ -9,6 +9,7 @@ import {
   Users,
   Mail,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import StatCard from "../../components/StatCard";
@@ -325,9 +326,22 @@ export default function CompanyOnboardingPage() {
 
               {/* Team members */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-                  Team Members ({selectedRequest.teamMembers?.length || 0})
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase">
+                    Team Members ({selectedRequest.teamMembers?.length || 0})
+                  </h3>
+                  {selectedRequest.teamMembersCsvUrl && (
+                    <a
+                      href={selectedRequest.teamMembersCsvUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                    >
+                      <Download className="w-3 h-3" />
+                      {selectedRequest.teamMembersCsvFileName || "Download CSV"}
+                    </a>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {selectedRequest.teamMembers?.map((member, i) => (
                     <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">

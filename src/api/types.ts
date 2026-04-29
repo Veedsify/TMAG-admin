@@ -521,6 +521,8 @@ export interface CompanyOnboardingRequest {
   selectedPlanCode: string;
   sampleRequest: string;
   teamMembers: AdminOnboardingTeamMember[];
+  teamMembersCsvFileName?: string | null;
+  teamMembersCsvUrl?: string | null;
   txRef: string;
   paymentStatus: string;
   paymentAmount: number;
