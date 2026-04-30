@@ -554,15 +554,17 @@ export interface AdminDoctorApplicationDto {
 }
 
 export interface AdminDoctorListItemDto {
-  userId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  licenseNumber: string;
-  specialization: string;
-  validatedPlansCount: number;
-  createdAt: string;
+    doctors: {
+        userId: number;
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+        licenseNumber: string;
+        specialization: string;
+        validatedPlansCount: number;
+        createdAt: string;
+    }[];
 }
 
 export interface AdminDoctorStats {
