@@ -510,6 +510,11 @@ export interface AdminOnboardingTeamMember {
   role: string;
 }
 
+export interface AdminOnboardingPlatformEmployee {
+  email: string;
+  name?: string;
+}
+
 export interface CompanyOnboardingRequest {
   id: number;
   companyName: string;
@@ -521,6 +526,7 @@ export interface CompanyOnboardingRequest {
   selectedPlanCode: string;
   sampleRequest: string;
   teamMembers: AdminOnboardingTeamMember[];
+  platformEmployees?: AdminOnboardingPlatformEmployee[];
   teamMembersCsvFileName?: string | null;
   teamMembersCsvUrl?: string | null;
   txRef: string;

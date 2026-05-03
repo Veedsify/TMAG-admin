@@ -370,6 +370,37 @@ export default function CompanyOnboardingPage() {
                 </div>
               </div>
 
+              {/* Platform employees */}
+              {selectedRequest.platformEmployees && selectedRequest.platformEmployees.length > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">
+                    Platform Employees to Link ({selectedRequest.platformEmployees.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedRequest.platformEmployees.map((emp, i) => (
+                      <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <div>
+                            {emp.name && <p className="text-sm font-medium text-gray-900">{emp.name}</p>}
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Mail className="w-3 h-3" />
+                              {emp.email}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                          Employee
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    These existing platform users will be linked to the company on approval.
+                  </p>
+                </div>
+              )}
+
               {/* Rejection reason if rejected */}
               {selectedRequest.status === "rejected" && selectedRequest.rejectionReason && (
                 <div className="bg-red-50 rounded-xl p-4">
