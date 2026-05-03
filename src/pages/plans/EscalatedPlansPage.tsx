@@ -4,10 +4,10 @@ import PageHeader from "../../components/PageHeader";
 import StatCard from "../../components/StatCard";
 import { cn } from "../../lib/utils";
 import axiosInstance from "../../api/axios";
-import type { ElevatedPlan } from "../../api/types";
+import type { EscalatedPlan } from "../../api/types";
 
-export default function ElevatedPlansPage() {
-  const [elevatedPlans, setElevatedPlans] = useState<ElevatedPlan[]>([]);
+export default function EscalatedPlansPage() {
+  const [escalatedPlans, setEscalatedPlans] = useState<EscalatedPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
@@ -15,24 +15,24 @@ export default function ElevatedPlansPage() {
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchElevatedPlans = async () => {
+    const fetchEscalatedPlans = async () => {
       try {
         setIsLoading(true);
-        const response = await axiosInstance.get("/admin/plans/elevated", {
+        const response = await axiosInstance.get("/admin/plans/escalated", {
           params: { page: 0, size: 50 },
         });
-        setElevatedPlans(response.data.data?.content || []);
+        setEscalatedPlans(response.data.data?.content || []);
       } catch (error) {
-        console.error("Failed to fetch elevated plans:", error);
+        console.error("Failed to fetch escalated plans:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchElevatedPlans();
+    fetchEscalatedPlans();
   }, []);
 
-  const filteredPlans = elevatedPlans.filter((p) =>
+  const filteredPlans = escalatedPlans.filter((p) =>
     p.travellerName.toLowerCase().includes(search.toLowerCase()) ||
     p.destination.toLowerCase().includes(search.toLowerCase())
   );
@@ -41,7 +41,7 @@ export default function ElevatedPlansPage() {
     try {
       setActionLoading(planId);
       await axiosInstance.post(`/admin/plans/${planId}/approve`);
-      setElevatedPlans(elevatedPlans.filter((p) => p.id !== planId));
+      setEscalatedPlans(escalatedPlans.filter((p) => p.id !== planId));
       setExpandedPlanId(null);
     } catch (error) {
       console.error("Failed to approve plan:", error);
@@ -54,7 +54,7 @@ export default function ElevatedPlansPage() {
     try {
       setActionLoading(planId);
       await axiosInstance.post(`/admin/plans/${planId}/reject`, { reason });
-      setElevatedPlans(elevatedPlans.filter((p) => p.id !== planId));
+      setEscalatedPlans(escalatedPlans.filter((p) => p.id !== planId));
       setExpandedPlanId(null);
     } catch (error) {
       console.error("Failed to reject plan:", error);
@@ -85,8 +85,8 @@ export default function ElevatedPlansPage() {
 
   const summaryCards = [
     {
-      label: "Elevated Plans",
-      value: elevatedPlans.length,
+      label: "Escalated Plans",
+      value: escalatedPlans.length,
       icon: <CheckCircle className="w-4 h-4" />,
       iconClassName: "bg-blue-100 text-blue-600",
     },
@@ -103,7 +103,7 @@ export default function ElevatedPlansPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Elevated Travel Plans"
+        title="Escalated Travel Plans"
         description="Plans that require senior medical review. Approve or reject with final determination."
       />
 
@@ -135,7 +135,7 @@ export default function ElevatedPlansPage() {
 
         {filteredPlans.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-500">No elevated plans at this time.</p>
+            <p className="text-gray-500">No escalated plans at this time.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -155,7 +155,7 @@ export default function ElevatedPlansPage() {
                       {plan.destination} • Risk Score: {plan.riskScore}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Elevated by: Dr. {plan.reviewDoctorName}
+                      Escalated by: Dr. {plan.reviewDoctorName}
                     </p>
                   </div>
                   <ChevronDown
@@ -201,11 +201,22 @@ export default function ElevatedPlansPage() {
                         {plan.travellerEmail}
                       </p>
                       <p>
-                        <span className="font-medium">Elevated At:</span>{" "}
-                        {plan.elevatedAt
-                          ? new Date(plan.elevatedAt).toLocaleString()
+                        <span className="font-medium">Escalated At:</span>{" "}
+                        {plan.escalatedAt
+                          ? new Date(plan.escalatedAt).toLocaleString()
                           : "Not available"}
                       </p>
+                      {plan.openToAllDoctors ? (
+                        <p>
+                          <span className="font-medium">Doctor Assignment:</span>{" "}
+                          Open to all doctors
+                        </p>
+                      ) : plan.assignedDoctors && plan.assignedDoctors.length > 0 ? (
+                        <p>
+                          <span className="font-medium">Assigned Doctors:</span>{" "}
+                          {plan.assignedDoctors.map((d) => `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim()).join(", ")}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="rounded-lg border border-gray-200 bg-white p-4">

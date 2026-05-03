@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "./api";
 import { getAuthCookie } from "./axios";
-import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookRequest, CreateVersionRequest, UpdateVersionRequest } from "./types";
+import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookRequest, CreateVersionRequest, UpdateVersionRequest, CreditPlan } from "./types";
 
 export const queryKeys = {
   currentUser: ["admin", "currentUser"] as const,
@@ -915,6 +915,23 @@ export const useRevokeDoctor = () => {
       adminApi.revokeDoctor(userId, adminEmail),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "doctors"] });
+    },
+  });
+};
+
+export const useCreditPlans = () => {
+  return useQuery({
+    queryKey: ["admin", "credit-plans"],
+    queryFn: () => adminApi.getCreditPlans(),
+  });
+};
+
+export const useCreateCustomCreditPlan = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<CreditPlan>) => adminApi.createCustomCreditPlan(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "credit-plans"] });
     },
   });
 };

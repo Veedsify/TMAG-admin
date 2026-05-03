@@ -224,6 +224,9 @@ export default function DoctorsPage() {
                                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
+                                            {app.profilePictureUrl && (
+                                                <img src={app.profilePictureUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                                            )}
                                             <h3 className="font-semibold text-heading">
                                                 Dr. {app.firstName}{" "}
                                                 {app.lastName}
@@ -232,6 +235,7 @@ export default function DoctorsPage() {
                                                 {app.applicationStatus}
                                             </span>
                                         </div>
+                                        {app.bio && <p className="mb-3 text-sm text-muted">{app.bio}</p>}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
                                             <p className="text-muted">
                                                 <span className="text-heading">
@@ -392,6 +396,9 @@ export default function DoctorsPage() {
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
+                                        {doc.profilePictureUrl && (
+                                            <img src={doc.profilePictureUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
+                                        )}
                                         <h3 className="font-semibold text-heading">
                                             Dr. {doc.firstName} {doc.lastName}
                                         </h3>
@@ -408,6 +415,7 @@ export default function DoctorsPage() {
                                             </span>
                                         )}
                                     </div>
+                                    {doc.bio && <p className="mt-2 text-sm text-muted">{doc.bio}</p>}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">

@@ -10,6 +10,8 @@ export interface AdminUser {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   role: "super_admin" | "client_admin" | "support_admin";
   status: "active" | "inactive";
   lastLogin: string;
@@ -106,6 +108,8 @@ export interface AIRequestLog {
   promptSummary: string;
   outputSummary: string;
   tokensUsed: number;
+  planGenerationTokensUsed?: number;
+  summaryGenerationTokensUsed?: number;
   processingTimeMs: number;
   status: "success" | "error" | "flagged";
   errorMessage?: string;
@@ -524,6 +528,7 @@ export interface CompanyOnboardingRequest {
   website: string;
   billingCurrency: string;
   selectedPlanCode: string;
+  creditCount?: number;
   sampleRequest: string;
   teamMembers: AdminOnboardingTeamMember[];
   platformEmployees?: AdminOnboardingPlatformEmployee[];
@@ -556,21 +561,23 @@ export interface AdminDoctorApplicationDto {
   applicationSubmittedAt: string;
   identityDocumentUrl: string | null;
   licenseDocumentUrl: string | null;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
   createdAt: string;
 }
 
 export interface AdminDoctorListItemDto {
-    doctors: {
-        userId: number;
-        firstName: string;
-        lastName: string;
-        email: string;
-        phone: string;
-        licenseNumber: string;
-        specialization: string;
-        validatedPlansCount: number;
-        createdAt: string;
-    }[];
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
+  profilePictureUrl?: string | null;
+  bio?: string | null;
+  validatedPlansCount: number;
+  createdAt: string;
 }
 
 export interface AdminDoctorStats {
@@ -582,7 +589,7 @@ export interface AdminDoctorStats {
 
 // ─── Elevated Plans ───────────────────────────────────────
 
-export interface ElevatedPlan {
+export interface EscalatedPlan {
   id: string;
   destination: string;
   duration: string;
@@ -594,5 +601,25 @@ export interface ElevatedPlan {
   doctorFeedback: string;
   pdfPreviewUrl?: string | null;
   summaryPreviewUrl?: string | null;
-  elevatedAt: string;
+  escalatedAt: string;
+  assignedDoctors?: { doctorId: number; firstName?: string; lastName?: string; email?: string; profilePictureUrl?: string }[];
+  openToAllDoctors?: boolean;
+}
+
+export interface CreditPlan {
+  id: number;
+  code: string;
+  displayName: string;
+  basePriceUsd: number;
+  basePriceNgn: number | null;
+  description: string;
+  isDefault: boolean;
+  isCompanyPlan: boolean;
+  signupRangeLabel: string | null;
+  serviceLevel: "STANDARD" | "PREMIUM" | null;
+  visibility: "PUBLIC" | "CUSTOM";
+  assignedCompanyId?: number | null;
+  planCount?: number | null;
+  createdAt: string;
+  updatedAt: string;
 }

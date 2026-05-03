@@ -223,8 +223,6 @@ export default function CompanyDetailPage() {
                         "px-2.5 py-0.5 rounded-xl text-xs font-medium capitalize",
                         company.billingStatus === "active" &&
                           "bg-success/10 text-success",
-                        company.billingStatus === "overdue" &&
-                          "bg-warning/10 text-warning",
                         company.billingStatus === "frozen" &&
                           "bg-danger/10 text-danger"
                       )}

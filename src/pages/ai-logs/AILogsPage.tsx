@@ -139,7 +139,9 @@ export default function AILogsPage() {
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Destination</th>
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Status</th>
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Risk</th>
-              <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Tokens</th>
+              <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Plan Tokens</th>
+              <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Summary Tokens</th>
+              <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Total Tokens</th>
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Time (ms)</th>
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Model</th>
               <th className="text-left p-4 text-muted font-medium text-xs uppercase tracking-wide">Timestamp</th>
@@ -174,6 +176,8 @@ export default function AILogsPage() {
                     {log.riskLevel}
                   </span>
                 </td>
+                <td className="p-4 text-body">{(log.planGenerationTokensUsed ?? 0).toLocaleString()}</td>
+                <td className="p-4 text-body">{(log.summaryGenerationTokensUsed ?? 0).toLocaleString()}</td>
                 <td className="p-4 text-body">{log.tokensUsed.toLocaleString()}</td>
                 <td className="p-4 text-body">{log.processingTimeMs.toLocaleString()}</td>
                 <td className="p-4 text-muted text-xs">{log.modelUsed}</td>
@@ -187,7 +191,7 @@ export default function AILogsPage() {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-8 text-center text-muted text-sm">
+                <td colSpan={11} className="p-8 text-center text-muted text-sm">
                   No AI logs found matching your filters.
                 </td>
               </tr>
@@ -211,7 +215,9 @@ export default function AILogsPage() {
                 ["Status", detail.status],
                 ["Risk Level", detail.riskLevel],
                 ["Model", detail.modelUsed],
-                ["Tokens Used", detail.tokensUsed.toLocaleString()],
+                ["Plan Generation Tokens", (detail.planGenerationTokensUsed ?? 0).toLocaleString()],
+                ["Summary Generation Tokens", (detail.summaryGenerationTokensUsed ?? 0).toLocaleString()],
+                ["Total Tokens Used", detail.tokensUsed.toLocaleString()],
                 ["Processing Time", `${detail.processingTimeMs}ms`],
                 ["Credit Consumed", detail.creditConsumed ? "Yes" : "No"],
                 ["Timestamp", detail.timestamp ? new Date(detail.timestamp).toLocaleString() : "—"],

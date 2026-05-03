@@ -18,9 +18,9 @@ import { cn } from "../../lib/utils";
 import { useCompanies, useCreateCompany } from "../../api/hooks";
 import type { Company } from "../../api/types";
 
-type BillingFilter = "all" | "active" | "overdue" | "frozen";
+type BillingFilter = "all" | "active" | "frozen";
 
-const emptyForm = { name: "", industry: "", contactEmail: "", contactPhone: "", website: "", address: "", billingCurrency: "NGN", adminName: "", adminEmail: "", adminPassword: "" };
+const emptyForm = { name: "", industry: "", contactEmail: "", contactPhone: "", website: "", address: "", billingCurrency: "NGN", adminFirstName: "", adminLastName: "", adminEmail: "", adminPassword: "" };
 
 export default function CompaniesPage() {
   const { data: companiesData, isLoading } = useCompanies();
@@ -44,9 +44,6 @@ export default function CompaniesPage() {
   const activeCount = companies.filter(
     (c) => c.billingStatus === "active"
   ).length;
-  const overdueCount = companies.filter(
-    (c) => c.billingStatus === "overdue"
-  ).length;
   const frozenCount = companies.filter(
     (c) => c.billingStatus === "frozen"
   ).length;
@@ -65,12 +62,6 @@ export default function CompaniesPage() {
       iconClassName: "bg-success/10 text-success",
     },
     {
-      label: "Overdue",
-      value: overdueCount,
-      icon: <CalendarClock className="w-4 h-4" />,
-      iconClassName: "bg-warning/10 text-warning",
-    },
-    {
       label: "Frozen",
       value: frozenCount,
       icon: <Building2 className="w-4 h-4" />,
@@ -81,7 +72,6 @@ export default function CompaniesPage() {
   const billingOptions: { key: BillingFilter; label: string }[] = [
     { key: "all", label: "All" },
     { key: "active", label: "Active" },
-    { key: "overdue", label: "Overdue" },
     { key: "frozen", label: "Frozen" },
   ];
 
@@ -196,8 +186,6 @@ export default function CompaniesPage() {
                       "px-2.5 py-0.5 rounded-xl text-xs font-medium capitalize",
                       company.billingStatus === "active" &&
                         "bg-success/10 text-success",
-                      company.billingStatus === "overdue" &&
-                        "bg-warning/10 text-warning",
                       company.billingStatus === "frozen" &&
                         "bg-danger/10 text-danger"
                     )}
@@ -324,11 +312,32 @@ export default function CompaniesPage() {
 
               <div className="pt-2 border-t border-border-light/50">
                 <p className="text-xs font-semibold text-heading mb-3">Default HR Admin Account</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="mb-3">
+                    <label className="block text-xs text-muted mb-1">Admin First Name</label>
+                    <input
+                      type="text"
+                      value={createForm.adminFirstName}
+                      onChange={(e) => setCreateForm({ ...createForm, adminFirstName: e.target.value })}
+                      placeholder=""
+                      className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-xs text-muted mb-1">Admin Last Name</label>
+                    <input
+                      type="text"
+                      value={createForm.adminLastName}
+                      onChange={(e) => setCreateForm({ ...createForm, adminLastName: e.target.value })}
+                      placeholder=""
+                      className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    />
+                  </div>
+                </div>
                 {([
-                  { field: "adminName", label: "Admin Name", type: "text", placeholder: "" },
-                  { field: "adminEmail", label: "Admin Email *", type: "email", placeholder: "" },
-                  { field: "adminPassword", label: "Admin Password *", type: "password", placeholder: "" },
-                ] as const).map(({ field, label, type, placeholder }) => (
+                  { field: "adminEmail" as const, label: "Admin Email *", type: "email", placeholder: "" },
+                  { field: "adminPassword" as const, label: "Admin Password *", type: "password", placeholder: "" },
+                ]).map(({ field, label, type, placeholder }) => (
                   <div key={field} className="mb-3">
                     <label className="block text-xs text-muted mb-1">{label}</label>
                     <input

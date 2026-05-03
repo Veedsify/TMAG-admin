@@ -158,6 +158,7 @@ export default function CompanyOnboardingPage() {
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Company</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Plan</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">No. of Plans</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Contact</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Payment</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
@@ -179,6 +180,9 @@ export default function CompanyOnboardingPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm font-medium text-gray-900">{req.selectedPlanCode}</span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {req.creditCount ?? 0}
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-sm text-gray-900">{req.contactEmail}</p>
@@ -297,6 +301,7 @@ export default function CompanyOnboardingPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-gray-900">{selectedRequest.selectedPlanCode}</p>
+                    <p className="text-xs text-gray-500">{selectedRequest.creditCount ?? 0} plans</p>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-gray-900">

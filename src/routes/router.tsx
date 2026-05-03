@@ -24,7 +24,8 @@ import EbookEditPage from "../pages/ebooks/EbookEditPage";
 import EbookDetailPage from "../pages/ebooks/EbookDetailPage";
 import CompanyOnboardingPage from "../pages/company-onboarding/CompanyOnboardingPage";
 import DoctorsPage from "../pages/doctors/DoctorsPage";
-import ElevatedPlansPage from "../pages/plans/ElevatedPlansPage";
+import EscalatedPlansPage from "../pages/plans/EscalatedPlansPage";
+import CreditPlansPage from "../pages/credit-plans/CreditPlansPage";
 
 export const router = createBrowserRouter([
   {
@@ -65,7 +66,8 @@ export const router = createBrowserRouter([
            { path: "plans/:planId", element: <PlansPage /> },
            { path: "plans/:planId/archive", element: <PlansPage /> },
            { path: "plans/:planId/delete", element: <PlansPage /> },
-           { path: "elevated-plans", element: <ElevatedPlansPage /> },
+           { path: "escalated-plans", element: <EscalatedPlansPage /> },
+           { path: "credit-plans", element: <CreditPlansPage /> },
 
           /* Analytics */
           { path: "analytics", element: <AnalyticsPage /> },

@@ -34,6 +34,7 @@ import type {
   AdminDoctorApplicationDto,
   AdminDoctorListItemDto,
   AdminDoctorStats,
+  CreditPlan,
 } from "./types";
 
 export const adminApi = {
@@ -361,7 +362,7 @@ export const adminApi = {
             .then((r) => r.data.data),
     getDoctors: () =>
         api
-            .get<ApiResponse<AdminDoctorListItemDto>>("/admin/doctors")
+            .get<ApiResponse<{ doctors: AdminDoctorListItemDto[] }>>("/admin/doctors")
             .then((r) => r.data.data.doctors),
     getDoctorStats: () =>
         api
@@ -388,5 +389,15 @@ export const adminApi = {
             .post<
                 ApiResponse<AdminDoctorListItemDto>
             >(`/admin/doctors/${userId}/revoke`, { adminEmail })
+            .then((r) => r.data.data),
+
+    // Credit Plans
+    getCreditPlans: () =>
+        api
+            .get<ApiResponse<CreditPlan[]>>('/user-credit-plans')
+            .then((r) => r.data.data),
+    createCustomCreditPlan: (data: Partial<CreditPlan>) =>
+        api
+            .post<ApiResponse<CreditPlan>>('/user-credit-plans/custom', data)
             .then((r) => r.data.data),
 };
