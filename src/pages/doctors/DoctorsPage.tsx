@@ -270,7 +270,7 @@ export default function DoctorsPage() {
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="flex gap-3 mt-3">
+                                        <div className="flex flex-wrap gap-3 mt-3">
                                             {app.licenseDocumentUrl && (
                                                 <a
                                                     href={
@@ -280,7 +280,27 @@ export default function DoctorsPage() {
                                                     rel="noopener noreferrer"
                                                     className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
                                                 >
-                                                    Signature / License Doc
+                                                    Signature
+                                                </a>
+                                            )}
+                                            {app.practicingLicenseUrl && (
+                                                <a
+                                                    href={app.practicingLicenseUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+                                                >
+                                                    Practicing License
+                                                </a>
+                                            )}
+                                            {app.travelMedicineCertificateUrl && (
+                                                <a
+                                                    href={app.travelMedicineCertificateUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+                                                >
+                                                    Travel Medicine Cert
                                                 </a>
                                             )}
                                         </div>

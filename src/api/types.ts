@@ -562,6 +562,8 @@ export interface AdminDoctorApplicationDto {
   identityDocumentUrl: string | null;
   licenseDocumentUrl: string | null;
   profilePictureUrl?: string | null;
+  practicingLicenseUrl?: string | null;
+  travelMedicineCertificateUrl?: string | null;
   bio?: string | null;
   createdAt: string;
 }
@@ -575,6 +577,8 @@ export interface AdminDoctorListItemDto {
   licenseNumber: string;
   specialization: string;
   profilePictureUrl?: string | null;
+  practicingLicenseUrl?: string | null;
+  travelMedicineCertificateUrl?: string | null;
   bio?: string | null;
   validatedPlansCount: number;
   createdAt: string;
