@@ -13,6 +13,8 @@ import {
     ExternalLink,
     PauseCircle,
     PlayCircle,
+    MousePointerClick,
+    BarChart3,
 } from "lucide-react";
 import {
     useAffiliateApplications,
@@ -614,8 +616,8 @@ export default function AffiliatesPage() {
             {/* ── Overview Tab ── */}
             {activeTab === "overview" && (
                 <div className="space-y-6">
-                    {/* Stats grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Stats grid — 6 cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                         {[
                             {
                                 label: "Active Affiliates",
@@ -630,6 +632,20 @@ export default function AffiliatesPage() {
                                 icon: ClipboardList,
                                 color: "text-amber-600",
                                 bg: "bg-amber-50",
+                            },
+                            {
+                                label: "Total Clicks",
+                                value: stats?.totalClicks?.toLocaleString() ?? "0",
+                                icon: MousePointerClick,
+                                color: "text-purple-600",
+                                bg: "bg-purple-50",
+                            },
+                            {
+                                label: "Conversion Rate",
+                                value: stats?.conversionRate != null ? stats.conversionRate.toFixed(1) + "%" : "—",
+                                icon: BarChart3,
+                                color: "text-cyan-600",
+                                bg: "bg-cyan-50",
                             },
                             {
                                 label: "Commission Paid",
@@ -666,6 +682,42 @@ export default function AffiliatesPage() {
                             </div>
                         ))}
                     </div>
+
+                    {/* 30-day clicks chart */}
+                    {stats?.clicksChart && stats.clicksChart.length > 0 && (
+                        <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h2 className="font-semibold text-heading">30-Day Clicks</h2>
+                                    <p className="text-xs text-muted mt-0.5">
+                                        Daily affiliate link clicks over the last 30 days
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-end gap-[3px] h-32">
+                                {stats.clicksChart.map((point) => {
+                                    const maxClick = Math.max(...stats.clicksChart!.map((p) => p.clicks), 1);
+                                    const height = Math.max((point.clicks / maxClick) * 100, 2);
+                                    return (
+                                        <div
+                                            key={point.date}
+                                            className="flex-1 relative group"
+                                            title={`${point.date}: ${point.clicks} clicks`}
+                                        >
+                                            <div
+                                                className="w-full rounded-t bg-accent/40 hover:bg-accent/60 transition-colors cursor-pointer"
+                                                style={{ height: `${height}%` }}
+                                            />
+                                            {/* Tooltip on hover */}
+                                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-darkest text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none z-10">
+                                                {point.clicks} clicks
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Top affiliates */}
                     <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">

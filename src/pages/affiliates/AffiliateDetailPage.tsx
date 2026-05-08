@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     ArrowLeft,
@@ -8,6 +8,7 @@ import {
     PauseCircle,
     PlayCircle,
     Percent,
+    Search,
     TrendingUp,
     MousePointerClick,
     RefreshCw,
@@ -68,6 +69,9 @@ export default function AffiliateDetailPage() {
     const [copied, setCopied] = useState(false);
     const [editingRate, setEditingRate] = useState(false);
     const [rateInput, setRateInput] = useState("");
+    const [referralSearch, setReferralSearch] = useState("");
+    const [referralStatusFilter, setReferralStatusFilter] = useState("all");
+    const [referralSort, setReferralSort] = useState<"date" | "status">("date");
 
     const { data: affiliate, isLoading } = useAffiliateDetail(affiliateId);
     const suspendMutation = useSuspendAffiliate();
@@ -145,6 +149,38 @@ export default function AffiliateDetailPage() {
         { key: "commissions", label: "Commissions", count: affiliate.commissions?.length ?? 0 },
         { key: "payouts", label: "Payouts", count: affiliate.payouts?.length ?? 0 },
     ];
+
+    const filteredReferrals = useMemo(() => {
+        if (!affiliate?.referrals) return [];
+        let list = [...affiliate.referrals];
+
+        // Filter by search
+        if (referralSearch.trim()) {
+            const q = referralSearch.toLowerCase();
+            list = list.filter(
+                (r) =>
+                    r.referredUserName.toLowerCase().includes(q) ||
+                    r.referredUserEmail.toLowerCase().includes(q) ||
+                    r.referralCode.toLowerCase().includes(q),
+            );
+        }
+
+        // Filter by status
+        if (referralStatusFilter !== "all") {
+            list = list.filter((r) => r.status === referralStatusFilter);
+        }
+
+        // Sort
+        list.sort((a, b) => {
+            if (referralSort === "status") {
+                return a.status.localeCompare(b.status);
+            }
+            // Default: sort by date descending
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        return list;
+    }, [affiliate?.referrals, referralSearch, referralStatusFilter, referralSort]);
 
     return (
         <div className="space-y-6">
@@ -335,10 +371,49 @@ export default function AffiliateDetailPage() {
             {/* ── Referrals ── */}
             {activeTab === "referrals" && (
                 <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+                    {affiliate.referrals && affiliate.referrals.length > 0 && (
+                        <div className="p-4 border-b border-border-light flex flex-col sm:flex-row gap-3">
+                            {/* Search */}
+                            <div className="relative flex-1 max-w-xs">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                                <input
+                                    type="text"
+                                    value={referralSearch}
+                                    onChange={(e) => setReferralSearch(e.target.value)}
+                                    placeholder="Search referrals…"
+                                    className="w-full pl-9 pr-3 py-2 bg-white border border-border-light/50 rounded-lg text-xs text-heading placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/20"
+                                />
+                            </div>
+                            {/* Status filter */}
+                            <select
+                                value={referralStatusFilter}
+                                onChange={(e) => setReferralStatusFilter(e.target.value)}
+                                className="px-3 py-2 bg-white border border-border-light/50 rounded-lg text-xs text-heading focus:outline-none focus:ring-2 focus:ring-accent/20"
+                            >
+                                <option value="all">All statuses</option>
+                                <option value="active">Active</option>
+                                <option value="converted">Converted</option>
+                            </select>
+                            {/* Sort */}
+                            <select
+                                value={referralSort}
+                                onChange={(e) => setReferralSort(e.target.value as "date" | "status")}
+                                className="px-3 py-2 bg-white border border-border-light/50 rounded-lg text-xs text-heading focus:outline-none focus:ring-2 focus:ring-accent/20"
+                            >
+                                <option value="date">Sort by date</option>
+                                <option value="status">Sort by status</option>
+                            </select>
+                        </div>
+                    )}
                     {!affiliate.referrals?.length ? (
                         <div className="p-12 text-center">
                             <Users size={36} className="mx-auto mb-3 text-muted/40" />
                             <p className="text-muted text-sm">No referrals yet</p>
+                        </div>
+                    ) : filteredReferrals.length === 0 ? (
+                        <div className="p-12 text-center">
+                            <Users size={36} className="mx-auto mb-3 text-muted/40" />
+                            <p className="text-muted text-sm">No referrals match your filters</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -363,7 +438,7 @@ export default function AffiliateDetailPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {affiliate.referrals.map((ref) => (
+                                    {filteredReferrals.map((ref) => (
                                         <tr
                                             key={ref.id}
                                             className="border-b border-border-light hover:bg-background-secondary/50 transition-colors"

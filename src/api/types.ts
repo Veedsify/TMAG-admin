@@ -706,6 +706,15 @@ export interface AdminAffiliateStats {
   totalPendingApplications: number;
   totalCommissionPaid: string;
   totalCommissionPending: string;
+  totalRevenue?: string;
+  conversionRate: number;
+  totalClicks: number;
+  totalConversions: number;
+  clicksChart?: Array<{
+    date: string;
+    clicks: number;
+    conversions: number;
+  }>;
   topAffiliates: Array<{
     id: number;
     userName: string;
