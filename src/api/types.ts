@@ -627,3 +627,89 @@ export interface CreditPlan {
   createdAt: string;
   updatedAt: string;
 }
+
+// Affiliate Management
+export interface AffiliateApplication {
+  id: number;
+  fullName: string;
+  companyName?: string;
+  email: string;
+  phone?: string;
+  websiteUrl?: string;
+  socialMediaLinks?: string;
+  estimatedMonthlyReach?: string;
+  promoDescription: string;
+  agreedToTerms: boolean;
+  status: "pending" | "approved" | "rejected" | "info_requested";
+  rejectionReason?: string;
+  adminNotes?: string;
+  createdAt: string;
+  approvedAt?: string;
+}
+
+export interface AdminAffiliate {
+  id: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  referralCode: string;
+  commissionRate: string;
+  discountRate: string;
+  totalClicks: number;
+  totalConversions: number;
+  totalCommissionEarned: string;
+  totalPaidOut: string;
+  pendingCommission: string;
+  status: "active" | "suspended" | "pending";
+  createdAt: string;
+}
+
+export interface AdminAffiliateDetail extends AdminAffiliate {
+  referrals: AdminAffiliateReferral[];
+  commissions: AdminAffiliateCommission[];
+  payouts: AdminAffiliatePayout[];
+}
+
+export interface AdminAffiliateReferral {
+  id: number;
+  referredUserName: string;
+  referredUserEmail: string;
+  referralCode: string;
+  status: string;
+  convertedAt?: string;
+  createdAt: string;
+}
+
+export interface AdminAffiliateCommission {
+  id: number;
+  amount: string;
+  baseAmount: string;
+  rate: string;
+  status: string;
+  customerEmail?: string;
+  referenceType: string;
+  campaign?: string;
+  createdAt: string;
+}
+
+export interface AdminAffiliatePayout {
+  id: number;
+  amount: string;
+  paymentMethod: string;
+  status: string;
+  requestedAt: string;
+  processedAt?: string;
+}
+
+export interface AdminAffiliateStats {
+  totalActiveAffiliates: number;
+  totalPendingApplications: number;
+  totalCommissionPaid: string;
+  totalCommissionPending: string;
+  topAffiliates: Array<{
+    id: number;
+    userName: string;
+    commissionEarned: string;
+    conversions: number;
+  }>;
+}

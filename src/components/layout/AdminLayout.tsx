@@ -24,6 +24,7 @@ import {
     BookOpen,
     ClipboardList,
     Stethoscope,
+    HandCoins,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAdminAuthStore } from "../../stores/adminAuthStore";
@@ -52,6 +53,7 @@ const navItems: { to: string; icon: ElementType; label: string }[] = [
     { to: "/admin/roles", icon: Shield, label: "Roles" },
     { to: "/admin/admin-users", icon: UserCog, label: "Admin Users" },
     { to: "/admin/doctors", icon: Stethoscope, label: "Doctors" },
+    { to: "/admin/affiliates", icon: HandCoins, label: "Affiliates" },
 ];
 
 function isNavActive(pathname: string, to: string): boolean {

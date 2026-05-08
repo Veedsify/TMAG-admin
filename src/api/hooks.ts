@@ -5,46 +5,46 @@ import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookReq
 
 export const queryKeys = {
   currentUser: ["admin", "currentUser"] as const,
-  
+
   dashboard: ["admin", "dashboard", "stats"] as const,
-  
+
   users: ["admin", "users"] as const,
   user: (id: string) => ["admin", "users", id] as const,
-  
+
   companies: ["admin", "companies"] as const,
   company: (id: string) => ["admin", "companies", id] as const,
   companyEmployees: (id: string) => ["admin", "companies", id, "employees"] as const,
-  
-  creditLedger: (params?: { userId?: string; companyId?: string }) => 
+
+  creditLedger: (params?: { userId?: string; companyId?: string }) =>
     ["admin", "ledger", params] as const,
-  
+
   invoices: ["admin", "billing", "invoices"] as const,
   invoice: (id: string) => ["admin", "billing", "invoices", id] as const,
-  
-  aiLogs: (params?: { userId?: string; status?: string }) => 
+
+  aiLogs: (params?: { userId?: string; status?: string }) =>
     ["admin", "ai-logs", params] as const,
   aiLog: (id: string) => ["admin", "ai-logs", id] as const,
-  
-  generatedPlans: (params?: { userId?: string; companyId?: string }) => 
+
+  generatedPlans: (params?: { userId?: string; companyId?: string }) =>
     ["admin", "plans", params] as const,
   generatedPlan: (id: string) => ["admin", "plans", id] as const,
-  
+
   analytics: ["admin", "analytics"] as const,
-  
+
   systemStatus: ["admin", "system", "status"] as const,
-  
-  systemLogs: (params?: { level?: string; limit?: number }) => 
+
+  systemLogs: (params?: { level?: string; limit?: number }) =>
     ["admin", "system", "logs", params] as const,
-  
+
   systemSettings: ["admin", "system", "settings"] as const,
-  
+
   roles: ["admin", "roles"] as const,
   role: (id: string) => ["admin", "roles", id] as const,
-  
+
   adminUsers: ["admin", "admin-users"] as const,
   adminUser: (id: string) => ["admin", "admin-users", id] as const,
-  
-  abuseFlags: (params?: { resolved?: boolean }) => 
+
+  abuseFlags: (params?: { resolved?: boolean }) =>
     ["admin", "abuse", params] as const,
 
   companyPricing: (companyId: string) =>
@@ -57,6 +57,13 @@ export const queryKeys = {
   ebookStats: ["admin", "ebooks", "stats"] as const,
   companyOnboarding: (status?: string) => ["admin", "company-onboarding", status] as const,
   companyOnboardingDetail: (id: number) => ["admin", "company-onboarding", id] as const,
+
+  // Affiliate Management
+  affiliateApplications: ["admin", "affiliates", "applications"] as const,
+  affiliateApplication: (id: number) => ["admin", "affiliates", "applications", id] as const,
+  affiliates: ["admin", "affiliates"] as const,
+  affiliateStats: ["admin", "affiliates", "stats"] as const,
+  affiliateDetail: (id: number) => ["admin", "affiliates", id] as const,
 };
 
 const extractData = <T>(response: { data: { data: T } }): T => {
@@ -932,6 +939,114 @@ export const useCreateCustomCreditPlan = () => {
     mutationFn: (data: Partial<CreditPlan>) => adminApi.createCustomCreditPlan(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "credit-plans"] });
+    },
+  });
+};
+
+// ─── Affiliate Management ─────────────────────────────────────
+
+export const useAffiliateApplications = () => {
+  return useQuery({
+    queryKey: queryKeys.affiliateApplications,
+    queryFn: () => adminApi.getAffiliateApplications(),
+  });
+};
+
+export const useAffiliateApplication = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.affiliateApplication(id),
+    queryFn: () => adminApi.getAffiliateApplication(id),
+    enabled: id > 0,
+  });
+};
+
+export const useAffiliates = () => {
+  return useQuery({
+    queryKey: queryKeys.affiliates,
+    queryFn: () => adminApi.getAffiliates(),
+  });
+};
+
+export const useAffiliateStats = () => {
+  return useQuery({
+    queryKey: queryKeys.affiliateStats,
+    queryFn: () => adminApi.getAffiliateStats(),
+  });
+};
+
+export const useAffiliateDetail = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.affiliateDetail(id),
+    queryFn: () => adminApi.getAffiliateDetail(id),
+    enabled: id > 0,
+  });
+};
+
+export const useApproveAffiliateApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.approveAffiliateApplication(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateApplications });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateStats });
+    },
+  });
+};
+
+export const useRejectAffiliateApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      adminApi.rejectAffiliateApplication(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateApplications });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateStats });
+    },
+  });
+};
+
+export const useRequestAffiliateInfo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: number; notes: string }) =>
+      adminApi.requestAffiliateInfo(id, notes),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateApplications });
+    },
+  });
+};
+
+export const useSuspendAffiliate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.suspendAffiliate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateStats });
+    },
+  });
+};
+
+export const useActivateAffiliate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.activateAffiliate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateStats });
+    },
+  });
+};
+
+export const useUpdateAffiliateCommissionRate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, rate }: { id: number; rate: number }) =>
+      adminApi.updateAffiliateCommissionRate(id, rate),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliateDetail(variables.id) });
     },
   });
 };

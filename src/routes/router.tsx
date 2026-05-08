@@ -26,6 +26,8 @@ import CompanyOnboardingPage from "../pages/company-onboarding/CompanyOnboarding
 import DoctorsPage from "../pages/doctors/DoctorsPage";
 import EscalatedPlansPage from "../pages/plans/EscalatedPlansPage";
 import CreditPlansPage from "../pages/credit-plans/CreditPlansPage";
+import AffiliatesPage from "../pages/affiliates/AffiliatesPage";
+import AffiliateDetailPage from "../pages/affiliates/AffiliateDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -104,6 +106,10 @@ export const router = createBrowserRouter([
 
           /* Doctors */
           { path: "doctors", element: <DoctorsPage /> },
+
+          /* Affiliates */
+          { path: "affiliates", element: <AffiliatesPage /> },
+          { path: "affiliates/:id", element: <AffiliateDetailPage /> },
 
           /* Catch-all */
           {

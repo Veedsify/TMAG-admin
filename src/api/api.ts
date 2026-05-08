@@ -35,6 +35,10 @@ import type {
   AdminDoctorListItemDto,
   AdminDoctorStats,
   CreditPlan,
+  AffiliateApplication,
+  AdminAffiliate,
+  AdminAffiliateDetail,
+  AdminAffiliateStats,
 } from "./types";
 
 export const adminApi = {
@@ -399,5 +403,51 @@ export const adminApi = {
     createCustomCreditPlan: (data: Partial<CreditPlan>) =>
         api
             .post<ApiResponse<CreditPlan>>('/user-credit-plans/custom', data)
+            .then((r) => r.data.data),
+
+    // Affiliates
+    getAffiliateApplications: () =>
+        api
+            .get<ApiResponse<AffiliateApplication[]>>("/admin/affiliates/applications")
+            .then((r) => r.data.data),
+    getAffiliateApplication: (id: number) =>
+        api
+            .get<ApiResponse<AffiliateApplication>>(`/admin/affiliates/applications/${id}`)
+            .then((r) => r.data.data),
+    approveAffiliateApplication: (id: number) =>
+        api
+            .post<ApiResponse<AdminAffiliateDetail>>(`/admin/affiliates/applications/${id}/approve`)
+            .then((r) => r.data.data),
+    rejectAffiliateApplication: (id: number, reason: string) =>
+        api
+            .post<ApiResponse<void>>(`/admin/affiliates/applications/${id}/reject`, { reason })
+            .then((r) => r.data.data),
+    requestAffiliateInfo: (id: number, notes: string) =>
+        api
+            .post<ApiResponse<void>>(`/admin/affiliates/applications/${id}/request-info`, { notes })
+            .then((r) => r.data.data),
+    getAffiliates: () =>
+        api
+            .get<ApiResponse<AdminAffiliate[]>>("/admin/affiliates")
+            .then((r) => r.data.data),
+    getAffiliateStats: () =>
+        api
+            .get<ApiResponse<AdminAffiliateStats>>("/admin/affiliates/stats")
+            .then((r) => r.data.data),
+    getAffiliateDetail: (id: number) =>
+        api
+            .get<ApiResponse<AdminAffiliateDetail>>(`/admin/affiliates/${id}`)
+            .then((r) => r.data.data),
+    suspendAffiliate: (id: number) =>
+        api
+            .post<ApiResponse<void>>(`/admin/affiliates/${id}/suspend`)
+            .then((r) => r.data.data),
+    activateAffiliate: (id: number) =>
+        api
+            .post<ApiResponse<void>>(`/admin/affiliates/${id}/activate`)
+            .then((r) => r.data.data),
+    updateAffiliateCommissionRate: (id: number, rate: number) =>
+        api
+            .put<ApiResponse<void>>(`/admin/affiliates/${id}/commission-rate`, { rate })
             .then((r) => r.data.data),
 };
