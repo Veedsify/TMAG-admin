@@ -15,7 +15,6 @@ import {
     Wallet,
     HandCoins,
     Users,
-    BadgeCheck,
     Edit2,
     X,
 } from "lucide-react";
@@ -307,7 +306,7 @@ export default function AffiliateDetailPage() {
                 </div>
 
                 {/* Stats row */}
-                <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-5 border-t border-border-light">
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 pt-5 border-t border-border-light">
                     {[
                         {
                             label: "Clicks",
@@ -320,18 +319,23 @@ export default function AffiliateDetailPage() {
                             icon: TrendingUp,
                         },
                         {
-                            label: "Earned",
-                            value: affiliate.totalCommissionEarned,
+                            label: "Earned (USD)",
+                            value: `$${affiliate.totalCommissionEarned}`,
                             icon: HandCoins,
                         },
                         {
-                            label: "Pending",
-                            value: affiliate.pendingCommission,
+                            label: "Earned (NGN)",
+                            value: `\u20a6${affiliate.totalCommissionEarnedNgn ?? "0"}`,
+                            icon: HandCoins,
+                        },
+                        {
+                            label: "Pending (USD)",
+                            value: `$${affiliate.pendingCommission}`,
                             icon: RefreshCw,
                         },
                         {
-                            label: "Paid Out",
-                            value: affiliate.totalPaidOut,
+                            label: "Paid Out (USD)",
+                            value: `$${affiliate.totalPaidOut}`,
                             icon: Wallet,
                         },
                     ].map((s) => (

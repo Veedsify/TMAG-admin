@@ -183,6 +183,12 @@ export interface DashboardStats {
   tokensUsedToday?: number;
   /** AI logs with error status in the last 7 days */
   failedAiCallsLast7Days?: number;
+  /** Affiliate commissions paid out */
+  affiliateCommissionPaid?: number;
+  /** Affiliate commissions pending payout */
+  affiliateCommissionPending?: number;
+  /** Active affiliate count */
+  totalActiveAffiliates?: number;
 }
 
 export interface AnalyticsData {
@@ -665,6 +671,9 @@ export interface AdminAffiliate {
 }
 
 export interface AdminAffiliateDetail extends AdminAffiliate {
+  totalCommissionEarnedNgn: string;
+  totalPaidOutNgn: string;
+  pendingCommissionNgn: string;
   referrals: AdminAffiliateReferral[];
   commissions: AdminAffiliateCommission[];
   payouts: AdminAffiliatePayout[];
@@ -686,6 +695,7 @@ export interface AdminAffiliateCommission {
   baseAmount: string;
   rate: string;
   status: string;
+  currency: string;
   customerEmail?: string;
   referenceType: string;
   campaign?: string;
@@ -695,6 +705,7 @@ export interface AdminAffiliateCommission {
 export interface AdminAffiliatePayout {
   id: number;
   amount: string;
+  currency: string;
   paymentMethod: string;
   status: string;
   requestedAt: string;

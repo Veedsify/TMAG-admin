@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     HandCoins,
@@ -25,11 +25,15 @@ import {
     useRequestAffiliateInfo,
     useSuspendAffiliate,
     useActivateAffiliate,
+    useAffiliatePayouts,
+    useApproveAffiliatePayout,
+    useRejectAffiliatePayout,
+    useCompleteAffiliatePayout,
 } from "../../api/hooks";
 import toast from "react-hot-toast";
 import type { AffiliateApplication } from "../../api/types";
 
-type Tab = "applications" | "affiliates" | "overview";
+type Tab = "applications" | "affiliates" | "overview" | "payouts";
 
 const statusBadge = (status: AffiliateApplication["status"]) => {
     const map = {
@@ -86,6 +90,13 @@ export default function AffiliatesPage() {
     const requestInfoMutation = useRequestAffiliateInfo();
     const suspendMutation = useSuspendAffiliate();
     const activateMutation = useActivateAffiliate();
+
+    const { data: payouts, isLoading: payoutsLoading } = useAffiliatePayouts();
+    const approvePayoutMutation = useApproveAffiliatePayout();
+    const rejectPayoutMutation = useRejectAffiliatePayout();
+    const completePayoutMutation = useCompleteAffiliatePayout();
+    const [rejectingPayoutId, setRejectingPayoutId] = useState<number | null>(null);
+    const [payoutRejectReason, setPayoutRejectReason] = useState("");
 
     const filteredApplications = useMemo(() => {
         return (applications ?? []).filter((a) =>
@@ -173,6 +184,11 @@ export default function AffiliatesPage() {
             count: affiliates?.length ?? 0,
         },
         { key: "overview", label: "Overview" },
+        {
+            key: "payouts",
+            label: "Payouts",
+            count: payouts?.length ?? 0,
+        },
     ];
 
     return (
@@ -324,7 +340,7 @@ export default function AffiliatesPage() {
                                 </thead>
                                 <tbody>
                                     {filteredApplications.map((app) => (
-                                        <>
+                                        <Fragment key={app.id}>
                                             <tr
                                                 key={app.id}
                                                 className="border-b border-border-light hover:bg-background-secondary/50 transition-colors"
@@ -483,7 +499,7 @@ export default function AffiliatesPage() {
                                                     </td>
                                                 </tr>
                                             )}
-                                        </>
+                                        </Fragment>
                                     ))}
                                 </tbody>
                             </table>
@@ -796,6 +812,133 @@ export default function AffiliatesPage() {
                             </table>
                         )}
                     </div>
+                </div>
+            )}
+
+            {/* ── Payouts Tab ── */}
+            {activeTab === "payouts" && (
+                <div className="bg-white rounded-2xl border border-border-light/50 overflow-hidden">
+                    {payoutsLoading ? (
+                        <div className="flex items-center justify-center h-48">
+                            <Loader2 className="animate-spin text-accent" size={24} />
+                        </div>
+                    ) : !payouts?.length ? (
+                        <div className="p-12 text-center">
+                            <HandCoins size={40} className="mx-auto mb-3 text-muted/40" />
+                            <p className="text-muted">No payout requests</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-border-light">
+                                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Affiliate</th>
+                                        <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Amount</th>
+                                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden md:table-cell">Method</th>
+                                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Status</th>
+                                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden sm:table-cell">Requested</th>
+                                        <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {payouts.map((p: any) => (
+                                        <Fragment key={p.id}>
+                                            <tr className="border-b border-border-light hover:bg-background-secondary/50 transition-colors">
+                                                <td className="px-5 py-4">
+                                                    <p className="font-medium text-heading">{p.affiliateName}</p>
+                                                    <p className="text-xs text-muted">{p.affiliateEmail}</p>
+                                                </td>
+                                                <td className="px-5 py-4 text-right font-semibold text-heading">
+                                                    {p.currency === "NGN" ? "\u20a6" : "$"}{parseFloat(p.amount).toFixed(2)}
+                                                </td>
+                                                <td className="px-5 py-4 text-muted capitalize hidden md:table-cell">
+                                                    {p.paymentMethod?.replace("_", " ")}
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    {affiliateStatusBadge(p.status === "completed" ? "active" : p.status === "failed" ? "suspended" : "pending")}
+                                                </td>
+                                                <td className="px-5 py-4 text-muted hidden sm:table-cell">
+                                                    {new Date(p.requestedAt).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {p.status === "pending" && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => approvePayoutMutation.mutate(p.id)}
+                                                                    disabled={approvePayoutMutation.isPending}
+                                                                    className="flex items-center gap-1 py-1.5 px-3 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                                                                >
+                                                                    <CheckCircle size={12} />
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setRejectingPayoutId(p.id);
+                                                                        setPayoutRejectReason("");
+                                                                    }}
+                                                                    className="flex items-center gap-1 py-1.5 px-3 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
+                                                                >
+                                                                    <XCircle size={12} />
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {p.status === "processing" && (
+                                                            <button
+                                                                onClick={() => completePayoutMutation.mutate(p.id)}
+                                                                disabled={completePayoutMutation.isPending}
+                                                                className="flex items-center gap-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                                            >
+                                                                <CheckCircle size={12} />
+                                                                Complete
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {rejectingPayoutId === p.id && (
+                                                <tr className="bg-red-50/40 border-b border-border-light">
+                                                    <td colSpan={6} className="px-5 py-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <textarea
+                                                                value={payoutRejectReason}
+                                                                onChange={(e) => setPayoutRejectReason(e.target.value)}
+                                                                placeholder="Rejection reason..."
+                                                                rows={2}
+                                                                className="flex-1 px-3 py-2 text-xs border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+                                                            />
+                                                            <div className="flex flex-col gap-1.5">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (!payoutRejectReason.trim()) { toast.error("Provide a reason"); return; }
+                                                                        rejectPayoutMutation.mutate(
+                                                                            { payoutId: p.id, reason: payoutRejectReason },
+                                                                            { onSuccess: () => { setRejectingPayoutId(null); setPayoutRejectReason(""); toast.success("Payout rejected"); } }
+                                                                        );
+                                                                    }}
+                                                                    disabled={rejectPayoutMutation.isPending}
+                                                                    className="py-1.5 px-4 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                                                >
+                                                                    Confirm
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { setRejectingPayoutId(null); setPayoutRejectReason(""); }}
+                                                                    className="py-1.5 px-4 border border-border-light/50 text-xs rounded-lg hover:bg-button-secondary"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </Fragment>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

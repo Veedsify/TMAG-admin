@@ -399,6 +399,20 @@ export default function Dashboard() {
                                 icon={<Sparkles className="w-4 h-4" />}
                                 iconClassName="bg-gold/10 text-gold"
                             />
+                            <StatCard
+                                label="Affiliate commission paid"
+                                value={`${revSymbol}${(stats.affiliateCommissionPaid ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                                detail={`${stats.totalActiveAffiliates ?? 0} active affiliates`}
+                                icon={<Users className="w-4 h-4" />}
+                                iconClassName="bg-info/10 text-info"
+                            />
+                            <StatCard
+                                label="Affiliate commission pending"
+                                value={`${revSymbol}${(stats.affiliateCommissionPending ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                                detail="Awaiting payout approval"
+                                icon={<TrendingUp className="w-4 h-4" />}
+                                iconClassName="bg-warning/10 text-warning"
+                            />
                         </>
                     }
                 </div>
@@ -503,6 +517,12 @@ export default function Dashboard() {
                         description="Trust & safety queue"
                         badge={unresolvedFromStats}
                         badgeVariant={unresolvedFromStats > 0 ? "danger" : "neutral"}
+                    />
+                    <QuickLinkCard
+                        to="/admin/affiliates"
+                        label="Affiliates"
+                        description="Manage affiliate partners and payouts"
+                        badge={stats.totalActiveAffiliates ?? 0}
                     />
                 </div>
             </section>

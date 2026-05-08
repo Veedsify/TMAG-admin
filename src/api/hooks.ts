@@ -1050,3 +1050,46 @@ export const useUpdateAffiliateCommissionRate = () => {
     },
   });
 };
+
+// ─── Affiliate Payout Management ─────────────────────────────
+
+export const useAffiliatePayouts = (status?: string) => {
+  return useQuery({
+    queryKey: ["admin", "affiliates", "payouts", status],
+    queryFn: () => adminApi.getAffiliatePayouts(status),
+  });
+};
+
+export const useApproveAffiliatePayout = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payoutId: number) => adminApi.approveAffiliatePayout(payoutId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliates", "payouts"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+    },
+  });
+};
+
+export const useRejectAffiliatePayout = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ payoutId, reason }: { payoutId: number; reason: string }) =>
+      adminApi.rejectAffiliatePayout(payoutId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliates", "payouts"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+    },
+  });
+};
+
+export const useCompleteAffiliatePayout = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payoutId: number) => adminApi.completeAffiliatePayout(payoutId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "affiliates", "payouts"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.affiliates });
+    },
+  });
+};

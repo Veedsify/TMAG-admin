@@ -450,4 +450,22 @@ export const adminApi = {
         api
             .put<ApiResponse<void>>(`/admin/affiliates/${id}/commission-rate`, { rate })
             .then((r) => r.data.data),
+
+    // Affiliate Payouts
+    getAffiliatePayouts: (status?: string) =>
+        api
+            .get<ApiResponse<any[]>>("/admin/affiliates/payouts", { params: status ? { status } : {} })
+            .then((r) => r.data.data),
+    approveAffiliatePayout: (payoutId: number) =>
+        api
+            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/approve`)
+            .then((r) => r.data.data),
+    rejectAffiliatePayout: (payoutId: number, reason: string) =>
+        api
+            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/reject`, { reason })
+            .then((r) => r.data.data),
+    completeAffiliatePayout: (payoutId: number) =>
+        api
+            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/complete`)
+            .then((r) => r.data.data),
 };
