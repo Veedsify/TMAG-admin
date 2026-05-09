@@ -982,6 +982,14 @@ export const useAffiliateDetail = (id: number) => {
   });
 };
 
+export const useAffiliatePeriodStats = (id: number, startDate?: string, endDate?: string) => {
+  return useQuery({
+    queryKey: [...queryKeys.affiliateDetail(id), "periodStats", startDate, endDate],
+    queryFn: () => adminApi.getAffiliatePeriodStats(id, startDate, endDate),
+    enabled: id > 0,
+  });
+};
+
 export const useApproveAffiliateApplication = () => {
   const queryClient = useQueryClient();
   return useMutation({

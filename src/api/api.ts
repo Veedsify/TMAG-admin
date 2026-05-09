@@ -438,6 +438,10 @@ export const adminApi = {
         api
             .get<ApiResponse<AdminAffiliateDetail>>(`/admin/affiliates/${id}`)
             .then((r) => r.data.data),
+    getAffiliatePeriodStats: (id: number, startDate?: string, endDate?: string) =>
+        api
+            .get<ApiResponse<any>>(`/admin/affiliates/${id}/stats`, { params: { startDate, endDate } })
+            .then((r) => r.data.data),
     suspendAffiliate: (id: number) =>
         api
             .post<ApiResponse<void>>(`/admin/affiliates/${id}/suspend`)

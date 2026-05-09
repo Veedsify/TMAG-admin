@@ -15,6 +15,9 @@ import {
     PlayCircle,
     MousePointerClick,
     BarChart3,
+    ChevronDown,
+    ChevronRight,
+    Banknote,
 } from "lucide-react";
 import {
     useAffiliateApplications,
@@ -31,7 +34,7 @@ import {
     useCompleteAffiliatePayout,
 } from "../../api/hooks";
 import toast from "react-hot-toast";
-import type { AffiliateApplication } from "../../api/types";
+import type { AffiliateApplication, AdminAffiliatePayout } from "../../api/types";
 
 type Tab = "applications" | "affiliates" | "overview" | "payouts";
 
@@ -71,6 +74,189 @@ const affiliateStatusBadge = (status: "active" | "suspended" | "pending") => {
         </span>
     );
 };
+
+// ─── Payout Table Row (expandable) ───────────────────────────
+
+function PayoutTableRow({
+    payout,
+    onApprove,
+    onRejectInit,
+    onComplete,
+    isRejecting,
+    payoutRejectReason,
+    onRejectReasonChange,
+    onConfirmReject,
+    onCancelReject,
+}: {
+    payout: AdminAffiliatePayout;
+    onApprove: () => void;
+    onRejectInit: () => void;
+    onComplete: () => void;
+    isRejecting: boolean;
+    payoutRejectReason: string;
+    onRejectReasonChange: (v: string) => void;
+    onConfirmReject: () => void;
+    onCancelReject: () => void;
+}) {
+    const [expanded, setExpanded] = useState(false);
+
+    let paymentDetailsObj: Record<string, string> | null = null;
+    if (payout.paymentDetails) {
+        try {
+            paymentDetailsObj = JSON.parse(payout.paymentDetails);
+        } catch {
+            paymentDetailsObj = null;
+        }
+    }
+
+    return (
+        <>
+            <tr
+                className="border-b border-border-light hover:bg-background-secondary/50 transition-colors cursor-pointer"
+                onClick={() => setExpanded(!expanded)}
+            >
+                <td className="px-2 py-4 text-muted">
+                    {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </td>
+                <td className="px-5 py-4">
+                    <p className="font-medium text-heading">{payout.affiliateName}</p>
+                    <p className="text-xs text-muted">{payout.affiliateEmail}</p>
+                </td>
+                <td className="px-5 py-4 text-right font-semibold text-heading">
+                    {payout.currency === "NGN" ? "\u20a6" : "$"}{parseFloat(payout.amount).toFixed(2)}
+                </td>
+                <td className="px-5 py-4 text-muted capitalize hidden md:table-cell">
+                    {payout.paymentMethod?.replace("_", " ")}
+                </td>
+                <td className="px-5 py-4">
+                    <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                            payout.status === "completed"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : payout.status === "failed"
+                                    ? "bg-red-50 text-red-700"
+                                    : payout.status === "processing"
+                                        ? "bg-blue-50 text-blue-700"
+                                        : "bg-amber-50 text-amber-700"
+                        }`}
+                    >
+                        {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
+                    </span>
+                </td>
+                <td className="px-5 py-4 text-muted hidden sm:table-cell">
+                    {new Date(payout.requestedAt).toLocaleDateString()}
+                </td>
+                <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-2">
+                        {payout.status === "pending" && (
+                            <>
+                                <button
+                                    onClick={onApprove}
+                                    className="flex items-center gap-1 py-1.5 px-3 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700"
+                                >
+                                    <CheckCircle size={12} />
+                                    Approve
+                                </button>
+                                <button
+                                    onClick={onRejectInit}
+                                    className="flex items-center gap-1 py-1.5 px-3 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
+                                >
+                                    <XCircle size={12} />
+                                    Reject
+                                </button>
+                            </>
+                        )}
+                        {payout.status === "processing" && (
+                            <button
+                                onClick={onComplete}
+                                className="flex items-center gap-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
+                            >
+                                <CheckCircle size={12} />
+                                Complete
+                            </button>
+                        )}
+                    </div>
+                </td>
+            </tr>
+            {expanded && (
+                <tr className="bg-background-secondary/30 border-b border-border-light">
+                    <td colSpan={7} className="px-5 py-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Payment Details */}
+                            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                                    <Banknote size={13} />
+                                    Payment Details
+                                </div>
+                                {paymentDetailsObj ? (
+                                    <div className="bg-white rounded-lg border border-border-light/50 p-3 space-y-1.5">
+                                        {Object.entries(paymentDetailsObj).map(([key, val]) => (
+                                            <div key={key} className="flex items-center gap-2 text-sm">
+                                                <span className="text-muted capitalize min-w-[100px]">
+                                                    {key.replace(/_/g, " ")}:
+                                                </span>
+                                                <span className="text-heading font-medium">
+                                                    {String(val)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : payout.paymentDetails ? (
+                                    <div className="bg-white rounded-lg border border-border-light/50 p-3">
+                                        <p className="text-sm text-heading font-mono whitespace-pre-wrap">
+                                            {payout.paymentDetails}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted italic">No payment details recorded</p>
+                                )}
+                            </div>
+                            {/* Notes */}
+                            {payout.notes && (
+                                <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                                        Admin Notes
+                                    </div>
+                                    <p className="text-sm text-heading bg-white rounded-lg border border-border-light/50 p-3">
+                                        {payout.notes}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                        {/* Inline reject form */}
+                        {isRejecting && (
+                            <div className="mt-4 bg-red-50/40 rounded-lg p-3">
+                                <div className="flex items-center gap-3">
+                                    <textarea
+                                        value={payoutRejectReason}
+                                        onChange={(e) => onRejectReasonChange(e.target.value)}
+                                        placeholder="Rejection reason..."
+                                        rows={2}
+                                        className="flex-1 px-3 py-2 text-xs border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
+                                    />
+                                    <div className="flex flex-col gap-1.5">
+                                        <button
+                                            onClick={onConfirmReject}
+                                            className="py-1.5 px-4 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700"
+                                        >
+                                            Confirm
+                                        </button>
+                                        <button
+                                            onClick={onCancelReject}
+                                            className="py-1.5 px-4 border border-border-light/50 text-xs rounded-lg hover:bg-button-secondary"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </td>
+                </tr>
+            )}
+        </>
+    );
+}
 
 export default function AffiliatesPage() {
     const navigate = useNavigate();
@@ -568,10 +754,10 @@ export default function AffiliatesPage() {
                                                 </code>
                                             </td>
                                             <td className="px-5 py-4 text-right text-muted hidden sm:table-cell">
-                                                {aff.totalClicks.toLocaleString()}
+                                                {aff.totalClicks?.toLocaleString() ?? "0"}
                                             </td>
                                             <td className="px-5 py-4 text-right text-muted hidden sm:table-cell">
-                                                {aff.totalConversions.toLocaleString()}
+                                                {aff.totalConversions?.toLocaleString() ?? "0"}
                                             </td>
                                             <td className="px-5 py-4 text-right font-medium text-heading hidden lg:table-cell">
                                                 {aff.totalCommissionEarned}
@@ -762,7 +948,10 @@ export default function AffiliatesPage() {
                                             Name
                                         </th>
                                         <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">
-                                            Commission Earned
+                                            Earned (USD)
+                                        </th>
+                                        <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden sm:table-cell">
+                                            Earned (NGN)
                                         </th>
                                         <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">
                                             Conversions
@@ -801,10 +990,15 @@ export default function AffiliatesPage() {
                                                 </button>
                                             </td>
                                             <td className="px-5 py-3 text-right font-semibold text-heading">
-                                                {aff.commissionEarned}
+                                                {aff.commissionEarned != null ? `$${Number(aff.commissionEarned).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"}
+                                            </td>
+                                            <td className="px-5 py-3 text-right font-semibold text-heading hidden sm:table-cell">
+                                                {aff.commissionEarnedNgn != null && Number(aff.commissionEarnedNgn) > 0
+                                                    ? `\u20a6${Number(aff.commissionEarnedNgn).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                    : "—"}
                                             </td>
                                             <td className="px-5 py-3 text-right text-muted">
-                                                {aff.conversions.toLocaleString()}
+                                                {aff.conversions?.toLocaleString() ?? "0"}
                                             </td>
                                         </tr>
                                     ))}
@@ -832,6 +1026,7 @@ export default function AffiliatesPage() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-border-light">
+                                        <th className="w-8 px-2 py-3"></th>
                                         <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Affiliate</th>
                                         <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">Amount</th>
                                         <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden md:table-cell">Method</th>
@@ -842,98 +1037,24 @@ export default function AffiliatesPage() {
                                 </thead>
                                 <tbody>
                                     {payouts.map((p: any) => (
-                                        <Fragment key={p.id}>
-                                            <tr className="border-b border-border-light hover:bg-background-secondary/50 transition-colors">
-                                                <td className="px-5 py-4">
-                                                    <p className="font-medium text-heading">{p.affiliateName}</p>
-                                                    <p className="text-xs text-muted">{p.affiliateEmail}</p>
-                                                </td>
-                                                <td className="px-5 py-4 text-right font-semibold text-heading">
-                                                    {p.currency === "NGN" ? "\u20a6" : "$"}{parseFloat(p.amount).toFixed(2)}
-                                                </td>
-                                                <td className="px-5 py-4 text-muted capitalize hidden md:table-cell">
-                                                    {p.paymentMethod?.replace("_", " ")}
-                                                </td>
-                                                <td className="px-5 py-4">
-                                                    {affiliateStatusBadge(p.status === "completed" ? "active" : p.status === "failed" ? "suspended" : "pending")}
-                                                </td>
-                                                <td className="px-5 py-4 text-muted hidden sm:table-cell">
-                                                    {new Date(p.requestedAt).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-5 py-4">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {p.status === "pending" && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => approvePayoutMutation.mutate(p.id)}
-                                                                    disabled={approvePayoutMutation.isPending}
-                                                                    className="flex items-center gap-1 py-1.5 px-3 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-                                                                >
-                                                                    <CheckCircle size={12} />
-                                                                    Approve
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setRejectingPayoutId(p.id);
-                                                                        setPayoutRejectReason("");
-                                                                    }}
-                                                                    className="flex items-center gap-1 py-1.5 px-3 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100"
-                                                                >
-                                                                    <XCircle size={12} />
-                                                                    Reject
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {p.status === "processing" && (
-                                                            <button
-                                                                onClick={() => completePayoutMutation.mutate(p.id)}
-                                                                disabled={completePayoutMutation.isPending}
-                                                                className="flex items-center gap-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                                            >
-                                                                <CheckCircle size={12} />
-                                                                Complete
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            {rejectingPayoutId === p.id && (
-                                                <tr className="bg-red-50/40 border-b border-border-light">
-                                                    <td colSpan={6} className="px-5 py-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <textarea
-                                                                value={payoutRejectReason}
-                                                                onChange={(e) => setPayoutRejectReason(e.target.value)}
-                                                                placeholder="Rejection reason..."
-                                                                rows={2}
-                                                                className="flex-1 px-3 py-2 text-xs border border-red-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 resize-none"
-                                                            />
-                                                            <div className="flex flex-col gap-1.5">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        if (!payoutRejectReason.trim()) { toast.error("Provide a reason"); return; }
-                                                                        rejectPayoutMutation.mutate(
-                                                                            { payoutId: p.id, reason: payoutRejectReason },
-                                                                            { onSuccess: () => { setRejectingPayoutId(null); setPayoutRejectReason(""); toast.success("Payout rejected"); } }
-                                                                        );
-                                                                    }}
-                                                                    disabled={rejectPayoutMutation.isPending}
-                                                                    className="py-1.5 px-4 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50"
-                                                                >
-                                                                    Confirm
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { setRejectingPayoutId(null); setPayoutRejectReason(""); }}
-                                                                    className="py-1.5 px-4 border border-border-light/50 text-xs rounded-lg hover:bg-button-secondary"
-                                                                >
-                                                                    Cancel
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </Fragment>
+                                        <PayoutTableRow
+                                            key={p.id}
+                                            payout={p}
+                                            onApprove={() => approvePayoutMutation.mutate(p.id)}
+                                            onRejectInit={() => { setRejectingPayoutId(p.id); setPayoutRejectReason(""); }}
+                                            onComplete={() => completePayoutMutation.mutate(p.id)}
+                                            isRejecting={rejectingPayoutId === p.id}
+                                            payoutRejectReason={payoutRejectReason}
+                                            onRejectReasonChange={setPayoutRejectReason}
+                                            onConfirmReject={() => {
+                                                if (!payoutRejectReason.trim()) { toast.error("Provide a reason"); return; }
+                                                rejectPayoutMutation.mutate(
+                                                    { payoutId: p.id, reason: payoutRejectReason },
+                                                    { onSuccess: () => { setRejectingPayoutId(null); setPayoutRejectReason(""); toast.success("Payout rejected"); } }
+                                                );
+                                            }}
+                                            onCancelReject={() => { setRejectingPayoutId(null); setPayoutRejectReason(""); }}
+                                        />
                                     ))}
                                 </tbody>
                             </table>

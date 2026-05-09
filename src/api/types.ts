@@ -698,6 +698,7 @@ export interface AdminAffiliateCommission {
   currency: string;
   customerEmail?: string;
   referenceType: string;
+  referenceId?: number;
   campaign?: string;
   createdAt: string;
 }
@@ -707,9 +708,15 @@ export interface AdminAffiliatePayout {
   amount: string;
   currency: string;
   paymentMethod: string;
+  paymentDetails?: string;
   status: string;
+  notes?: string;
   requestedAt: string;
   processedAt?: string;
+  affiliateId?: number;
+  affiliateName?: string;
+  affiliateEmail?: string;
+  referralCode?: string;
 }
 
 export interface AdminAffiliateStats {
@@ -729,7 +736,8 @@ export interface AdminAffiliateStats {
   topAffiliates: Array<{
     id: number;
     userName: string;
-    commissionEarned: string;
+    commissionEarned: string | number;
+    commissionEarnedNgn: string | number;
     conversions: number;
   }>;
 }

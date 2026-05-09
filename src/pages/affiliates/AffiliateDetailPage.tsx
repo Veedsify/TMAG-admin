@@ -17,12 +17,18 @@ import {
     Users,
     Edit2,
     X,
+    ChevronDown,
+    ChevronRight,
+    Banknote,
+    Calendar,
 } from "lucide-react";
+import type { AdminAffiliatePayout } from "../../api/types";
 import {
     useAffiliateDetail,
     useSuspendAffiliate,
     useActivateAffiliate,
     useUpdateAffiliateCommissionRate,
+    useAffiliatePeriodStats,
 } from "../../api/hooks";
 import toast from "react-hot-toast";
 
@@ -41,6 +47,109 @@ function StatusBadge({ status }: { status: "active" | "suspended" | "pending" })
             {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
     );
+}
+
+// ─── Payout Detail Row ──────────────────────────────────────
+
+function PayoutDetailRow({ payout }: { payout: AdminAffiliatePayout }) {
+    const [expanded, setExpanded] = useState(false);
+
+    let paymentDetailsObj: Record<string, string> | null = null;
+    if (payout.paymentDetails) {
+        try {
+            paymentDetailsObj = JSON.parse(payout.paymentDetails);
+        } catch {
+            paymentDetailsObj = null;
+        }
+    }
+
+    return (
+        <>
+            <tr
+                className="border-b border-border-light hover:bg-background-secondary/50 transition-colors cursor-pointer"
+                onClick={() => setExpanded(!expanded)}
+            >
+                <td className="px-2 py-3 text-muted">
+                    {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </td>
+                <td className="px-5 py-3 text-right font-semibold text-heading">
+                    {payout.currency === "NGN" ? "\u20a6" : "$"}{payout.amount}
+                </td>
+                <td className="px-5 py-3 text-muted capitalize">
+                    {payout.paymentMethod?.replace("_", " ")}
+                </td>
+                <td className="px-5 py-3">
+                    <CommissionStatusBadge status={payout.status} />
+                </td>
+                <td className="px-5 py-3 text-muted hidden sm:table-cell">
+                    {new Date(payout.requestedAt).toLocaleDateString()}
+                </td>
+                <td className="px-5 py-3 text-muted hidden sm:table-cell">
+                    {payout.processedAt
+                        ? new Date(payout.processedAt).toLocaleDateString()
+                        : "—"}
+                </td>
+            </tr>
+            {expanded && (
+                <tr className="bg-background-secondary/30 border-b border-border-light">
+                    <td colSpan={6} className="px-5 py-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Payment Details */}
+                            <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                                    <Banknote size={13} />
+                                    Payment Details
+                                </div>
+                                {paymentDetailsObj ? (
+                                    <div className="bg-white rounded-lg border border-border-light/50 p-3 space-y-1.5">
+                                        {Object.entries(paymentDetailsObj).map(([key, val]) => (
+                                            <div key={key} className="flex items-center gap-2 text-sm">
+                                                <span className="text-muted capitalize min-w-[100px]">
+                                                    {key.replace(/_/g, " ")}:
+                                                </span>
+                                                <span className="text-heading font-medium">
+                                                    {String(val)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : payout.paymentDetails ? (
+                                    <div className="bg-white rounded-lg border border-border-light/50 p-3">
+                                        <p className="text-sm text-heading font-mono whitespace-pre-wrap">
+                                            {payout.paymentDetails}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted italic">No payment details recorded</p>
+                                )}
+                            </div>
+                            {/* Notes */}
+                            {payout.notes && (
+                                <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted mb-2">
+                                        Admin Notes
+                                    </div>
+                                    <p className="text-sm text-heading bg-white rounded-lg border border-border-light/50 p-3">
+                                        {payout.notes}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
+}
+
+function formatReferenceType(type: string): string {
+    const map: Record<string, string> = {
+        "credit_purchase": "Credit Purchase",
+        "ebook": "Ebook",
+        "plan_generation": "Plan Generation",
+        "subscription": "Subscription",
+    };
+    return map[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function CommissionStatusBadge({ status }: { status: string }) {
@@ -72,7 +181,22 @@ export default function AffiliateDetailPage() {
     const [referralStatusFilter, setReferralStatusFilter] = useState("all");
     const [referralSort, setReferralSort] = useState<"date" | "status">("date");
 
+    const [period, setPeriod] = useState<string>("all");
+
+    const periodDates = useMemo(() => {
+        if (period === "all") return { startDate: undefined, endDate: undefined };
+        const now = new Date();
+        const start = new Date(now);
+        const days = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 365;
+        start.setDate(start.getDate() - days);
+        return {
+            startDate: start.toISOString().split("T")[0],
+            endDate: now.toISOString().split("T")[0],
+        };
+    }, [period]);
+
     const { data: affiliate, isLoading } = useAffiliateDetail(affiliateId);
+    const { data: periodStats } = useAffiliatePeriodStats(affiliateId, periodDates.startDate, periodDates.endDate);
     const suspendMutation = useSuspendAffiliate();
     const activateMutation = useActivateAffiliate();
     const updateRateMutation = useUpdateAffiliateCommissionRate();
@@ -121,34 +245,6 @@ export default function AffiliateDetailPage() {
         );
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="animate-spin text-accent" size={28} />
-            </div>
-        );
-    }
-
-    if (!affiliate) {
-        return (
-            <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <p className="text-muted">Affiliate not found</p>
-                <button
-                    onClick={() => navigate("/admin/affiliates")}
-                    className="flex items-center gap-2 text-sm text-accent hover:underline"
-                >
-                    <ArrowLeft size={14} /> Back to Affiliates
-                </button>
-            </div>
-        );
-    }
-
-    const tabs: { key: DetailTab; label: string; count: number }[] = [
-        { key: "referrals", label: "Referrals", count: affiliate.referrals?.length ?? 0 },
-        { key: "commissions", label: "Commissions", count: affiliate.commissions?.length ?? 0 },
-        { key: "payouts", label: "Payouts", count: affiliate.payouts?.length ?? 0 },
-    ];
-
     const filteredReferrals = useMemo(() => {
         if (!affiliate?.referrals) return [];
         let list = [...affiliate.referrals];
@@ -180,6 +276,34 @@ export default function AffiliateDetailPage() {
 
         return list;
     }, [affiliate?.referrals, referralSearch, referralStatusFilter, referralSort]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="animate-spin text-accent" size={28} />
+            </div>
+        );
+    }
+
+    if (!affiliate) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+                <p className="text-muted">Affiliate not found</p>
+                <button
+                    onClick={() => navigate("/admin/affiliates")}
+                    className="flex items-center gap-2 text-sm text-accent hover:underline"
+                >
+                    <ArrowLeft size={14} /> Back to Affiliates
+                </button>
+            </div>
+        );
+    }
+
+    const tabs: { key: DetailTab; label: string; count: number }[] = [
+        { key: "referrals", label: "Referrals", count: affiliate.referrals?.length ?? 0 },
+        { key: "commissions", label: "Commissions", count: affiliate.commissions?.length ?? 0 },
+        { key: "payouts", label: "Payouts", count: affiliate.payouts?.length ?? 0 },
+    ];
 
     return (
         <div className="space-y-6">
@@ -352,6 +476,60 @@ export default function AffiliateDetailPage() {
                 </div>
             </div>
 
+            {/* ── Period Tracking ── */}
+            <div className="bg-white rounded-2xl border border-border-light/50 p-5">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-sm font-semibold text-heading">Period Tracking</h2>
+                        <p className="text-xs text-muted mt-0.5">
+                            View performance for a specific time period
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-1 bg-button-secondary rounded-lg p-1">
+                        <Calendar size={14} className="text-muted ml-1" />
+                        {["all", "7d", "30d", "90d", "1y"].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setPeriod(p)}
+                                className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                                    period === p
+                                        ? "bg-white text-heading shadow-sm border border-border-light/50"
+                                        : "text-muted hover:text-heading"
+                                }`}
+                            >
+                                {p === "all" ? "All" : p === "7d" ? "7 days" : p === "30d" ? "30 days" : p === "90d" ? "90 days" : "1 year"}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs uppercase tracking-wider text-muted font-semibold">Clicks</span>
+                        <p className="text-xl font-serif text-heading">
+                            {periodStats?.clicks?.toLocaleString() ?? affiliate?.totalClicks?.toLocaleString() ?? "0"}
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs uppercase tracking-wider text-muted font-semibold">Conversions</span>
+                        <p className="text-xl font-serif text-heading">
+                            {periodStats?.conversions?.toLocaleString() ?? affiliate?.totalConversions?.toLocaleString() ?? "0"}
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs uppercase tracking-wider text-muted font-semibold">Earned (USD)</span>
+                        <p className="text-xl font-serif text-heading">
+                            ${periodStats?.commissionEarnedUsd ?? affiliate?.totalCommissionEarned ?? "0"}
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs uppercase tracking-wider text-muted font-semibold">Earned (NGN)</span>
+                        <p className="text-xl font-serif text-heading">
+                            {"\u20a6"}{periodStats?.commissionEarnedNgn ?? affiliate?.totalCommissionEarnedNgn ?? "0"}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Detail Tabs */}
             <div className="flex items-center gap-2 border-b border-border-light">
                 {tabs.map((t) => (
@@ -509,7 +687,7 @@ export default function AffiliateDetailPage() {
                                             Customer
                                         </th>
                                         <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden sm:table-cell">
-                                            Type
+                                            Source
                                         </th>
                                         <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold hidden sm:table-cell">
                                             Date
@@ -523,10 +701,10 @@ export default function AffiliateDetailPage() {
                                             className="border-b border-border-light hover:bg-background-secondary/50 transition-colors"
                                         >
                                             <td className="px-5 py-3 text-right font-semibold text-heading">
-                                                {com.amount}
+                                                {com.currency === "NGN" ? "\u20a6" : "$"}{com.amount}
                                             </td>
                                             <td className="px-5 py-3 text-right text-muted hidden md:table-cell">
-                                                {com.baseAmount}
+                                                {com.currency === "NGN" ? "\u20a6" : "$"}{com.baseAmount}
                                             </td>
                                             <td className="px-5 py-3 text-right text-muted hidden md:table-cell">
                                                 {com.rate}%
@@ -537,8 +715,17 @@ export default function AffiliateDetailPage() {
                                             <td className="px-5 py-3 text-muted hidden lg:table-cell">
                                                 {com.customerEmail ?? "—"}
                                             </td>
-                                            <td className="px-5 py-3 text-muted hidden sm:table-cell">
-                                                {com.referenceType}
+                                            <td className="px-5 py-3 hidden sm:table-cell">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <span className="px-2 py-0.5 rounded bg-accent/10 text-accent text-xs font-medium">
+                                                        {formatReferenceType(com.referenceType)}
+                                                    </span>
+                                                    {com.referenceId && (
+                                                        <span className="text-xs text-muted">
+                                                            #{com.referenceId}
+                                                        </span>
+                                                    )}
+                                                </span>
                                             </td>
                                             <td className="px-5 py-3 text-muted hidden sm:table-cell">
                                                 {new Date(com.createdAt).toLocaleDateString()}
@@ -565,6 +752,7 @@ export default function AffiliateDetailPage() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-border-light">
+                                        <th className="w-8 px-2 py-3"></th>
                                         <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-muted font-semibold">
                                             Amount
                                         </th>
@@ -584,30 +772,7 @@ export default function AffiliateDetailPage() {
                                 </thead>
                                 <tbody>
                                     {affiliate.payouts.map((payout) => (
-                                        <tr
-                                            key={payout.id}
-                                            className="border-b border-border-light hover:bg-background-secondary/50 transition-colors"
-                                        >
-                                            <td className="px-5 py-3 text-right font-semibold text-heading">
-                                                {payout.amount}
-                                            </td>
-                                            <td className="px-5 py-3 text-muted">
-                                                {payout.paymentMethod}
-                                            </td>
-                                            <td className="px-5 py-3">
-                                                <CommissionStatusBadge status={payout.status} />
-                                            </td>
-                                            <td className="px-5 py-3 text-muted hidden sm:table-cell">
-                                                {new Date(payout.requestedAt).toLocaleDateString()}
-                                            </td>
-                                            <td className="px-5 py-3 text-muted hidden sm:table-cell">
-                                                {payout.processedAt
-                                                    ? new Date(
-                                                          payout.processedAt,
-                                                      ).toLocaleDateString()
-                                                    : "—"}
-                                            </td>
-                                        </tr>
+                                        <PayoutDetailRow key={payout.id} payout={payout} />
                                     ))}
                                 </tbody>
                             </table>
