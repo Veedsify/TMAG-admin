@@ -98,6 +98,7 @@ export default function SystemSettingsPage() {
   useEffect(() => {
     if (settingsData) {
       const d = settingsData as unknown as Record<string, unknown>;
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setForm({
         maintenanceMode: (d.maintenanceMode as boolean) ?? false,
         defaultIndividualCredits: (d.defaultIndividualCredits as number) ?? 20,
@@ -127,7 +128,7 @@ export default function SystemSettingsPage() {
   }, [settingsData]);
 
   const handleSave = () => {
-    updateSettingsMutation.mutate(form as unknown as any, {
+    updateSettingsMutation.mutate(form, {
       onSuccess: () => {
         setSaved(true);
         toast.success("Settings saved");

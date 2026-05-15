@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, DollarSign, Clock, AlertTriangle, RotateCcw, Eye, X, LucideLoader2 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
@@ -15,15 +15,11 @@ export default function BillingPage() {
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-    const [selected, setSelected] = useState<string | null>(null);
+    const [selected, setSelected] = useState<string | null>(invoiceId ?? null);
 
     const { data: invoicesData, isLoading } = useInvoices();
     const { data: dashboardStats } = useDashboardStats();
     const invoices: Invoice[] = invoicesData ?? [];
-
-    useEffect(() => {
-        if (invoiceId) setSelected(invoiceId);
-    }, [invoiceId]);
 
     const filtered = invoices.filter((inv) => {
         const matchSearch =

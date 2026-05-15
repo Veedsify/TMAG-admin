@@ -179,6 +179,7 @@ export default function EbookEditPage() {
 
             // Add new / update existing versions
             for (const v of versions) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { _key, _fileMode, _uploading, _fileName, _dirty, _isNew, _id, ...versionData } = v;
                 if (_isNew && v.label && v.price && v.currency) {
                     await addVersion({ ebookId, data: versionData as CreateVersionRequest });

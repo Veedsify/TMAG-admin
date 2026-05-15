@@ -20,7 +20,7 @@ import type { Company } from "../../api/types";
 
 type BillingFilter = "all" | "active" | "frozen";
 
-const emptyForm = { name: "", industry: "", contactEmail: "", contactPhone: "", website: "", address: "", billingCurrency: "NGN", adminFirstName: "", adminLastName: "", adminEmail: "", adminPassword: "" };
+const emptyForm = { name: "", industry: "", contactEmail: "", contactPhone: "", website: "", address: "", billingCurrency: "NGN" as "USD" | "NGN" | "EUR" | "GBP", adminFirstName: "", adminLastName: "", adminEmail: "", adminPassword: "" };
 
 export default function CompaniesPage() {
   const { data: companiesData, isLoading } = useCompanies();
@@ -300,7 +300,7 @@ export default function CompaniesPage() {
                 <label className="block text-xs text-muted mb-1">Billing Currency</label>
                 <select
                   value={createForm.billingCurrency}
-                  onChange={(e) => setCreateForm({ ...createForm, billingCurrency: e.target.value })}
+                  onChange={(e) => setCreateForm({ ...createForm, billingCurrency: e.target.value as "USD" | "NGN" | "EUR" | "GBP" })}
                   className="w-full px-3 py-2 bg-white border border-border-light/50 rounded-xl text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
                 >
                   <option value="NGN">NGN — Nigerian Naira</option>

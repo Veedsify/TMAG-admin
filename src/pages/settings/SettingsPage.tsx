@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect */
     if (settings) setForm({ ...settings });
   }, [settings]);
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "./api";
 import { getAuthCookie } from "./axios";
-import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookRequest, CreateVersionRequest, UpdateVersionRequest, CreditPlan } from "./types";
+import type { LoginRequest, CreditAdjustment, CreateEbookRequest, UpdateEbookRequest, CreateVersionRequest, UpdateVersionRequest, CreditPlan, ManagedUser, Company, Invoice, SystemSettings, AdminRole, AdminUser } from "./types";
 
 export const queryKeys = {
   currentUser: ["admin", "currentUser"] as const,
@@ -135,7 +135,7 @@ export const useUser = (id: string) => {
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.createUser(data),
+    mutationFn: (data: Partial<ManagedUser>) => adminApi.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
     },
@@ -145,7 +145,7 @@ export const useCreateUser = () => {
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateUser(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<ManagedUser> }) => adminApi.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
     },
@@ -235,7 +235,7 @@ export const useCompanyEmployees = (id: string) => {
 export const useCreateCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.createCompany(data),
+    mutationFn: (data: Partial<Company>) => adminApi.createCompany(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies });
     },
@@ -245,7 +245,7 @@ export const useCreateCompany = () => {
 export const useUpdateCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateCompany(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => adminApi.updateCompany(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies });
     },
@@ -350,7 +350,7 @@ export const useInvoice = (id: string) => {
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.createInvoice(data),
+    mutationFn: (data: Partial<Invoice>) => adminApi.createInvoice(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
     },
@@ -360,7 +360,7 @@ export const useCreateInvoice = () => {
 export const useUpdateInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateInvoice(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Invoice> }) => adminApi.updateInvoice(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.invoices });
     },
@@ -543,7 +543,7 @@ export const useSystemSettings = () => {
 export const useUpdateSystemSettings = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.updateSystemSettings(data),
+    mutationFn: (data: Partial<SystemSettings>) => adminApi.updateSystemSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.systemSettings });
     },
@@ -594,7 +594,7 @@ export const useRole = (id: string) => {
 export const useCreateRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.createRole(data),
+    mutationFn: (data: Partial<AdminRole>) => adminApi.createRole(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roles });
     },
@@ -604,7 +604,7 @@ export const useCreateRole = () => {
 export const useUpdateRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateRole(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<AdminRole> }) => adminApi.updateRole(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.roles });
     },
@@ -645,7 +645,7 @@ export const useAdminUser = (id: string) => {
 export const useCreateAdminUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => adminApi.createAdminUser(data),
+    mutationFn: (data: Partial<AdminUser>) => adminApi.createAdminUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
     },
@@ -655,7 +655,7 @@ export const useCreateAdminUser = () => {
 export const useUpdateAdminUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateAdminUser(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<AdminUser> }) => adminApi.updateAdminUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminUsers });
     },

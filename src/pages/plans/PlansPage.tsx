@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, Filter, Eye, Flag, Archive, Trash2, X, FileText, ShieldAlert, AlertTriangle, CheckCircle, LucideLoader2 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
@@ -19,11 +19,7 @@ export default function PlansPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selected, setSelected] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (planId) setSelected(planId);
-  }, [planId]);
+  const [selected, setSelected] = useState<string | null>(planId ?? null);
 
   const filtered = plans.filter((p) => {
     const matchSearch =

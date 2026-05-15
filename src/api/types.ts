@@ -741,3 +741,9 @@ export interface AdminAffiliateStats {
     conversions: number;
   }>;
 }
+export interface AffiliatePeriodStats {
+  clicks?: number;
+  conversions?: number;
+  commissionEarnedUsd?: string | number;
+  commissionEarnedNgn?: string | number;
+}
