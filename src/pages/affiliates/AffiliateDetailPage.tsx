@@ -275,7 +275,7 @@ export default function AffiliateDetailPage() {
         });
 
         return list;
-    }, [affiliate?.referrals, referralSearch, referralStatusFilter, referralSort]);
+    }, [affiliate, referralSearch, referralStatusFilter, referralSort]);
 
     if (isLoading) {
         return (

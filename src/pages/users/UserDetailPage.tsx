@@ -82,12 +82,13 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     if (user) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setEditForm({
         name: user.name ?? "",
         email: user.email ?? "",
-        phone: (user as any).phone ?? "",
-        location: (user as any).location ?? "",
-        bio: (user as any).bio ?? "",
+        phone: user.phone ?? "",
+        location: user.location ?? "",
+        bio: user.bio ?? "",
       });
     }
   }, [user]);
@@ -210,16 +211,16 @@ export default function UserDetailPage() {
                     <Mail className="w-3.5 h-3.5" />
                     {user.email}
                   </span>
-                  {(user as any).phone && (
+                  {user.phone && (
                     <span className="flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5" />
-                      {(user as any).phone}
+                      {user.phone}
                     </span>
                   )}
-                  {(user as any).location && (
+                  {user.location && (
                     <span className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />
-                      {(user as any).location}
+                      {user.location}
                     </span>
                   )}
                   <span className="flex items-center gap-1.5">
@@ -231,7 +232,7 @@ export default function UserDetailPage() {
                     {user.role?.replace(/_/g, " ") ?? "user"}
                   </span>
                 </div>
-                {(user as any).bio && <p className="text-sm text-body">{(user as any).bio}</p>}
+                {user.bio && <p className="text-sm text-body">{user.bio}</p>}
               </div>
             </div>
           </div>

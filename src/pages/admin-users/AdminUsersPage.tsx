@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Search, Eye, X, UserCog, UserCheck, UserX, LucideLoader2, Plus, Pencil, Trash2 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
@@ -20,14 +20,10 @@ export default function AdminUsersPage() {
   const { adminId } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(adminId ?? null);
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminUser | null>(null);
   const [adminForm, setAdminForm] = useState(emptyAdminForm);
-
-  useEffect(() => {
-    if (adminId) setSelected(adminId);
-  }, [adminId]);
 
   const filtered = adminUsers.filter((u) =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||

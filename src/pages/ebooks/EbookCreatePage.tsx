@@ -95,6 +95,7 @@ export default function EbookCreatePage() {
             // Add each version
             for (const v of versions) {
                 if (!v.label || !v.price || !v.currency) continue;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { _key, _fileMode, _uploading, _fileName, ...versionData } = v;
                 await addVersion({ ebookId, data: versionData });
             }

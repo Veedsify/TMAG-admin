@@ -1036,7 +1036,7 @@ export default function AffiliatesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {payouts.map((p: any) => (
+                                    {payouts.map((p) => (
                                         <PayoutTableRow
                                             key={p.id}
                                             payout={p}

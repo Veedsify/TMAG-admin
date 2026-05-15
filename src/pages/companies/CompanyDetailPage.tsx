@@ -97,6 +97,7 @@ export default function CompanyDetailPage() {
 
   useEffect(() => {
     if (company) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect */
       setEditForm({
         name: company.name ?? "",
         industry: company.industry ?? "",
@@ -669,19 +670,19 @@ export default function CompanyDetailPage() {
                         {u.email}
                       </td>
                       <td className="py-3 pr-3 text-body text-xs capitalize">
-                        {(u as any).role?.replace(/_/g, " ") ?? "employee"}
+                        {u.role?.replace(/_/g, " ") ?? "employee"}
                       </td>
-                      <td className="py-3 pr-3 text-body">{(u as any).creditsUsed ?? 0}</td>
+                      <td className="py-3 pr-3 text-body">{u.creditsUsed ?? 0}</td>
                       <td className="py-3">
                         <span
                           className={cn(
                             "px-2.5 py-0.5 rounded-xl text-xs font-medium capitalize",
-                            (u as any).status === "active"
+                            u.status === "active"
                               ? "bg-success/10 text-success"
                               : "bg-danger/10 text-danger"
                           )}
                         >
-                          {(u as any).status ?? "active"}
+                          {u.status ?? "active"}
                         </span>
                       </td>
                     </tr>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Search, Eye, X, Activity, CheckCircle, XCircle, AlertTriangle, LucideLoader2 } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
@@ -33,9 +33,6 @@ export default function AILogsPage() {
     return "all";
   })();
 
-  useEffect(() => {
-    setSelected(null);
-  }, [activeTab]);
 
   const filtered = aiLogs.filter((log) => {
     const matchSearch =
@@ -48,7 +45,9 @@ export default function AILogsPage() {
     return true;
   });
 
-  const detail = selected ? aiLogs.find((l) => l.id === selected) : null;
+  const detail = selected && filtered.find((l) => l.id === selected)
+    ? aiLogs.find((l) => l.id === selected)
+    : null;
 
   const summaryCards = [
     {

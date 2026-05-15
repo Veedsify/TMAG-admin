@@ -89,9 +89,9 @@ export default function CreditsPage() {
             responseData?.purchase?.failedReason || "Payment verification failed"
           );
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStep("failed");
-        setErrorMsg(err?.response?.data?.message || "Verification failed");
+        setErrorMsg((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Verification failed");
       }
 
       // Clean URL params
@@ -107,9 +107,10 @@ export default function CreditsPage() {
     const transactionId = searchParams.get("transaction_id");
 
     if (txRefParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleCallback(txRefParam, status, transactionId);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGetQuote = async () => {
     if (!selectedCompanyId || !credits) return;
@@ -126,8 +127,8 @@ export default function CreditsPage() {
         return;
       }
       setStep("review");
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || "Failed to get quote");
+    } catch (err: unknown) {
+      setErrorMsg((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to get quote");
     }
   };
 
@@ -148,9 +149,9 @@ export default function CreditsPage() {
         setStep("failed");
         setErrorMsg("No payment link received");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStep("failed");
-      setErrorMsg(err?.response?.data?.message || "Failed to initiate payment");
+      setErrorMsg((err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to initiate payment");
     }
   };
 

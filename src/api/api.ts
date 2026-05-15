@@ -39,6 +39,8 @@ import type {
   AdminAffiliate,
   AdminAffiliateDetail,
   AdminAffiliateStats,
+  AdminAffiliatePayout,
+  AffiliatePeriodStats,
 } from "./types";
 
 export const adminApi = {
@@ -440,7 +442,7 @@ export const adminApi = {
             .then((r) => r.data.data),
     getAffiliatePeriodStats: (id: number, startDate?: string, endDate?: string) =>
         api
-            .get<ApiResponse<any>>(`/admin/affiliates/${id}/stats`, { params: { startDate, endDate } })
+            .get<ApiResponse<AffiliatePeriodStats>>(`/admin/affiliates/${id}/stats`, { params: { startDate, endDate } })
             .then((r) => r.data.data),
     suspendAffiliate: (id: number) =>
         api
@@ -458,18 +460,18 @@ export const adminApi = {
     // Affiliate Payouts
     getAffiliatePayouts: (status?: string) =>
         api
-            .get<ApiResponse<any[]>>("/admin/affiliates/payouts", { params: status ? { status } : {} })
+            .get<ApiResponse<AdminAffiliatePayout[]>>("/admin/affiliates/payouts", { params: status ? { status } : {} })
             .then((r) => r.data.data),
     approveAffiliatePayout: (payoutId: number) =>
         api
-            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/approve`)
+            .post<ApiResponse<AdminAffiliatePayout>>(`/admin/affiliates/payouts/${payoutId}/approve`)
             .then((r) => r.data.data),
     rejectAffiliatePayout: (payoutId: number, reason: string) =>
         api
-            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/reject`, { reason })
+            .post<ApiResponse<AdminAffiliatePayout>>(`/admin/affiliates/payouts/${payoutId}/reject`, { reason })
             .then((r) => r.data.data),
     completeAffiliatePayout: (payoutId: number) =>
         api
-            .post<ApiResponse<any>>(`/admin/affiliates/payouts/${payoutId}/complete`)
+            .post<ApiResponse<AdminAffiliatePayout>>(`/admin/affiliates/payouts/${payoutId}/complete`)
             .then((r) => r.data.data),
 };

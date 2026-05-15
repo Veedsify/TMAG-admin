@@ -43,91 +43,88 @@ const PageFallback = (
   </div>
 );
 
-function S({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={PageFallback}>{children}</Suspense>;
-}
 
 export const router = createBrowserRouter([
   {
     path: "/admin",
     children: [
       /* Login — standalone, no sidebar */
-      { index: true, element: <S><LoginPage /></S> },
+      { index: true, element: <Suspense fallback={PageFallback}><LoginPage /></Suspense> },
 
       /* All authenticated routes share AdminLayout */
       {
         element: <AdminLayout />,
         children: [
-          { path: "dashboard", element: <S><Dashboard /></S> },
+          { path: "dashboard", element: <Suspense fallback={PageFallback}><Dashboard /></Suspense> },
 
           /* Users */
-          { path: "users", element: <S><UsersPage /></S> },
-          { path: "users/:id", element: <S><UserDetailPage /></S> },
-          { path: "users/:id/:tab", element: <S><UserDetailPage /></S> },
+          { path: "users", element: <Suspense fallback={PageFallback}><UsersPage /></Suspense> },
+          { path: "users/:id", element: <Suspense fallback={PageFallback}><UserDetailPage /></Suspense> },
+          { path: "users/:id/:tab", element: <Suspense fallback={PageFallback}><UserDetailPage /></Suspense> },
 
           /* Companies */
-          { path: "companies", element: <S><CompaniesPage /></S> },
-          { path: "companies/:id", element: <S><CompanyDetailPage /></S> },
-          { path: "companies/:id/:tab", element: <S><CompanyDetailPage /></S> },
+          { path: "companies", element: <Suspense fallback={PageFallback}><CompaniesPage /></Suspense> },
+          { path: "companies/:id", element: <Suspense fallback={PageFallback}><CompanyDetailPage /></Suspense> },
+          { path: "companies/:id/:tab", element: <Suspense fallback={PageFallback}><CompanyDetailPage /></Suspense> },
 
           /* Ledger */
-          { path: "ledger", element: <S><CreditsPage /></S> },
-          { path: "ledger/:transactionId", element: <S><CreditsPage /></S> },
+          { path: "ledger", element: <Suspense fallback={PageFallback}><CreditsPage /></Suspense> },
+          { path: "ledger/:transactionId", element: <Suspense fallback={PageFallback}><CreditsPage /></Suspense> },
 
           /* AI Logs */
-          { path: "ai-logs", element: <S><AILogsPage /></S> },
-          { path: "ai-logs/failures", element: <S><AILogsPage /></S> },
-          { path: "ai-logs/flagged", element: <S><AILogsPage /></S> },
-          { path: "ai-logs/high-usage", element: <S><AILogsPage /></S> },
-          { path: "ai-logs/:logId", element: <S><AILogsPage /></S> },
+          { path: "ai-logs", element: <Suspense fallback={PageFallback}><AILogsPage /></Suspense> },
+          { path: "ai-logs/failures", element: <Suspense fallback={PageFallback}><AILogsPage /></Suspense> },
+          { path: "ai-logs/flagged", element: <Suspense fallback={PageFallback}><AILogsPage /></Suspense> },
+          { path: "ai-logs/high-usage", element: <Suspense fallback={PageFallback}><AILogsPage /></Suspense> },
+          { path: "ai-logs/:logId", element: <Suspense fallback={PageFallback}><AILogsPage /></Suspense> },
 
           /* Plans */
-          { path: "plans", element: <S><PlansPage /></S> },
-          { path: "plans/:planId", element: <S><PlansPage /></S> },
-          { path: "plans/:planId/archive", element: <S><PlansPage /></S> },
-          { path: "plans/:planId/delete", element: <S><PlansPage /></S> },
-          { path: "escalated-plans", element: <S><EscalatedPlansPage /></S> },
-          { path: "credit-plans", element: <S><CreditPlansPage /></S> },
+          { path: "plans", element: <Suspense fallback={PageFallback}><PlansPage /></Suspense> },
+          { path: "plans/:planId", element: <Suspense fallback={PageFallback}><PlansPage /></Suspense> },
+          { path: "plans/:planId/archive", element: <Suspense fallback={PageFallback}><PlansPage /></Suspense> },
+          { path: "plans/:planId/delete", element: <Suspense fallback={PageFallback}><PlansPage /></Suspense> },
+          { path: "escalated-plans", element: <Suspense fallback={PageFallback}><EscalatedPlansPage /></Suspense> },
+          { path: "credit-plans", element: <Suspense fallback={PageFallback}><CreditPlansPage /></Suspense> },
 
           /* Analytics */
-          { path: "analytics", element: <S><AnalyticsPage /></S> },
-          { path: "analytics/usage", element: <S><AnalyticsPage /></S> },
-          { path: "analytics/destinations", element: <S><AnalyticsPage /></S> },
-          { path: "analytics/credits", element: <S><AnalyticsPage /></S> },
-          { path: "analytics/revenue", element: <S><AnalyticsPage /></S> },
+          { path: "analytics", element: <Suspense fallback={PageFallback}><AnalyticsPage /></Suspense> },
+          { path: "analytics/usage", element: <Suspense fallback={PageFallback}><AnalyticsPage /></Suspense> },
+          { path: "analytics/destinations", element: <Suspense fallback={PageFallback}><AnalyticsPage /></Suspense> },
+          { path: "analytics/credits", element: <Suspense fallback={PageFallback}><AnalyticsPage /></Suspense> },
+          { path: "analytics/revenue", element: <Suspense fallback={PageFallback}><AnalyticsPage /></Suspense> },
 
           /* System */
-          { path: "system/status", element: <S><SystemStatusPage /></S> },
-          { path: "system/logs", element: <S><SystemLogsPage /></S> },
-          { path: "system/settings", element: <S><SystemSettingsPage /></S> },
-          { path: "abuse", element: <S><AbusePage /></S> },
-          { path: "plan-contexts", element: <S><PlanContextsPage /></S> },
+          { path: "system/status", element: <Suspense fallback={PageFallback}><SystemStatusPage /></Suspense> },
+          { path: "system/logs", element: <Suspense fallback={PageFallback}><SystemLogsPage /></Suspense> },
+          { path: "system/settings", element: <Suspense fallback={PageFallback}><SystemSettingsPage /></Suspense> },
+          { path: "abuse", element: <Suspense fallback={PageFallback}><AbusePage /></Suspense> },
+          { path: "plan-contexts", element: <Suspense fallback={PageFallback}><PlanContextsPage /></Suspense> },
 
           /* Billing */
-          { path: "billing", element: <S><BillingPage /></S> },
-          { path: "billing/:invoiceId", element: <S><BillingPage /></S> },
+          { path: "billing", element: <Suspense fallback={PageFallback}><BillingPage /></Suspense> },
+          { path: "billing/:invoiceId", element: <Suspense fallback={PageFallback}><BillingPage /></Suspense> },
 
           /* Access Control */
-          { path: "roles", element: <S><RolesPage /></S> },
-          { path: "roles/:roleId", element: <S><RolesPage /></S> },
-          { path: "admin-users", element: <S><AdminUsersPage /></S> },
-          { path: "admin-users/:adminId", element: <S><AdminUsersPage /></S> },
+          { path: "roles", element: <Suspense fallback={PageFallback}><RolesPage /></Suspense> },
+          { path: "roles/:roleId", element: <Suspense fallback={PageFallback}><RolesPage /></Suspense> },
+          { path: "admin-users", element: <Suspense fallback={PageFallback}><AdminUsersPage /></Suspense> },
+          { path: "admin-users/:adminId", element: <Suspense fallback={PageFallback}><AdminUsersPage /></Suspense> },
 
           /* Ebooks */
-          { path: "ebooks", element: <S><EbooksPage /></S> },
-          { path: "ebooks/create", element: <S><EbookCreatePage /></S> },
-          { path: "ebooks/:id", element: <S><EbookDetailPage /></S> },
-          { path: "ebooks/:id/edit", element: <S><EbookEditPage /></S> },
+          { path: "ebooks", element: <Suspense fallback={PageFallback}><EbooksPage /></Suspense> },
+          { path: "ebooks/create", element: <Suspense fallback={PageFallback}><EbookCreatePage /></Suspense> },
+          { path: "ebooks/:id", element: <Suspense fallback={PageFallback}><EbookDetailPage /></Suspense> },
+          { path: "ebooks/:id/edit", element: <Suspense fallback={PageFallback}><EbookEditPage /></Suspense> },
 
           /* Company Onboarding */
-          { path: "company-registrations", element: <S><CompanyOnboardingPage /></S> },
+          { path: "company-registrations", element: <Suspense fallback={PageFallback}><CompanyOnboardingPage /></Suspense> },
 
           /* Doctors */
-          { path: "doctors", element: <S><DoctorsPage /></S> },
+          { path: "doctors", element: <Suspense fallback={PageFallback}><DoctorsPage /></Suspense> },
 
           /* Affiliates */
-          { path: "affiliates", element: <S><AffiliatesPage /></S> },
-          { path: "affiliates/:id", element: <S><AffiliateDetailPage /></S> },
+          { path: "affiliates", element: <Suspense fallback={PageFallback}><AffiliatesPage /></Suspense> },
+          { path: "affiliates/:id", element: <Suspense fallback={PageFallback}><AffiliateDetailPage /></Suspense> },
 
           /* Catch-all */
           {
