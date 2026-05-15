@@ -412,7 +412,7 @@ export default function AnalyticsPage() {
                       <YAxis tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        formatter={(value: number | undefined) =>
+                        formatter={(value) =>
                           `${reportingSym}${Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                         }
                       />
@@ -436,7 +436,7 @@ export default function AnalyticsPage() {
                       </Pie>
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        formatter={(value: number | undefined) =>
+                        formatter={(value) =>
                           `${reportingSym}${Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                         }
                       />
@@ -470,7 +470,7 @@ export default function AnalyticsPage() {
                       <YAxis tick={{ fontSize: 11, fill: "#7a6a5a" }} stroke="#d4c4b4" tickLine={false} />
                       <Tooltip
                         contentStyle={tooltipStyle}
-                        formatter={(value: number | undefined) =>
+                        formatter={(value) =>
                           `${reportingSym}${Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                         }
                       />
