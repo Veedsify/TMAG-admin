@@ -558,8 +558,8 @@ export default function Dashboard() {
                                     />
                                     <Tooltip
                                         contentStyle={chartTooltipStyle}
-                                        formatter={(value: number | undefined, name: string | undefined) => {
-                                            const n = name ?? "";
+                                        formatter={(value, name) => {
+                                            const n = (name as string) ?? "";
                                             if (n.startsWith("Revenue")) {
                                                 return [
                                                     `${revSymbol}${Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
