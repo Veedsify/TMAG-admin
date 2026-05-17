@@ -30,10 +30,11 @@ import {
   useFreezeCompany,
   useUnfreezeCompany,
   useAddCompanyCredits,
-  useUpgradeTier,
+  useSetCompanyPlan,
   useUpdateCompany,
+  useCreditPlans,
 } from "../../api/hooks";
-import type { ManagedUser, GeneratedPlan, CreditLedgerEntry } from "../../api/types";
+import type { ManagedUser, GeneratedPlan, CreditLedgerEntry, CreditPlan } from "../../api/types";
 
 type TabKey =
   | "overview"
@@ -63,11 +64,12 @@ export default function CompanyDetailPage() {
   const { data: usersData } = useUsers();
   const { data: plansData } = useGeneratedPlans();
   const { data: ledgerData } = useCreditLedger({ companyId: id });
+  const { data: creditPlansData } = useCreditPlans(id);
 
   const freezeMutation = useFreezeCompany();
   const unfreezeMutation = useUnfreezeCompany();
   const addCreditsMutation = useAddCompanyCredits();
-  const upgradeMutation = useUpgradeTier();
+  const setCompanyPlanMutation = useSetCompanyPlan();
   const updateMutation = useUpdateCompany();
 
   const company = companyData;
@@ -75,6 +77,7 @@ export default function CompanyDetailPage() {
   const users: ManagedUser[] = usersData ?? [];
   const plans: GeneratedPlan[] = plansData ?? [];
   const ledger: CreditLedgerEntry[] = ledgerData ?? [];
+  const creditPlans: CreditPlan[] = creditPlansData ?? [];
 
   const basePath = `/admin/companies/${id}`;
   const activeTab: TabKey = (() => {
@@ -94,6 +97,8 @@ export default function CompanyDetailPage() {
 
   const [creditAmount, setCreditAmount] = useState(50);
   const [creditReason, setCreditReason] = useState("");
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [selectedPlanCode, setSelectedPlanCode] = useState("");
 
   useEffect(() => {
     if (company) {
@@ -106,6 +111,7 @@ export default function CompanyDetailPage() {
         contactPhone: company.contactPhone ?? "",
         address: company.address ?? "",
       });
+      setSelectedPlanCode(company.tier?.toUpperCase() ?? "");
     }
   }, [company]);
 
@@ -130,6 +136,9 @@ export default function CompanyDetailPage() {
   );
   const companyPlans = plans.filter((p) => p.companyId === company.id);
   const companyLedger = ledger.filter((e) => e.companyId === company.id);
+  const companyCreditPlans = creditPlans.filter(
+    (plan) => plan.isCompanyPlan || String(plan.assignedCompanyId ?? "") === company.id
+  );
 
   const creditPercent =
     company.creditsPurchased > 0
@@ -164,8 +173,14 @@ export default function CompanyDetailPage() {
     addCreditsMutation.mutate({ id: company.id, amount });
   };
 
-  const handleUpgrade = () => {
-    upgradeMutation.mutate(company.id);
+  const handleChangePlan = () => {
+    if (!selectedPlanCode) {
+      return;
+    }
+    setCompanyPlanMutation.mutate(
+      { id: company.id, planCode: selectedPlanCode },
+      { onSuccess: () => setShowPlanModal(false) }
+    );
   };
 
   return (
@@ -787,15 +802,20 @@ export default function CompanyDetailPage() {
               <Snowflake className="w-4 h-4" /> Freeze Company
             </button>
           )}
-          {company.tier !== "enterprise" && (
-            <button
-              onClick={handleUpgrade}
-              disabled={upgradeMutation.isPending}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors duration-150 disabled:opacity-50"
-            >
-              <TrendingUp className="w-4 h-4" /> Upgrade to Enterprise
-            </button>
-          )}
+          <button
+            onClick={() => {
+              setSelectedPlanCode(
+                companyCreditPlans.some((plan) => plan.code === selectedPlanCode)
+                  ? selectedPlanCode
+                  : companyCreditPlans[0]?.code ?? ""
+              );
+              setShowPlanModal(true);
+            }}
+            disabled={setCompanyPlanMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gold/10 text-gold rounded-xl text-sm font-medium hover:bg-gold/20 transition-colors duration-150 disabled:opacity-50"
+          >
+            <TrendingUp className="w-4 h-4" /> Change Tier
+          </button>
           <button
             onClick={() => handleAddCredits(50)}
             disabled={addCreditsMutation.isPending}
@@ -805,6 +825,73 @@ export default function CompanyDetailPage() {
           </button>
         </div>
       </div>
+
+      {showPlanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-heading/40 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-heading">Change company tier</h3>
+                <p className="mt-1 text-sm text-muted">
+                  Choose the credit plan this company should use.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-background-primary hover:text-heading"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {companyCreditPlans.length === 0 ? (
+                <p className="rounded-xl border border-border-light/50 bg-background-primary p-4 text-sm text-muted">
+                  No credit plans are available.
+                </p>
+              ) : (
+                <select
+                  value={selectedPlanCode}
+                  onChange={(event) => setSelectedPlanCode(event.target.value)}
+                  className="w-full rounded-xl border border-border-light/50 bg-white px-3 py-2 text-sm text-heading focus:outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  {companyCreditPlans.map((plan) => (
+                    <option key={plan.id} value={plan.code}>
+                      {plan.displayName} ({plan.code})
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {selectedPlanCode && (
+                <div className="rounded-xl bg-background-primary p-4 text-sm text-body">
+                  {companyCreditPlans.find((plan) => plan.code === selectedPlanCode)?.description ||
+                    "This will move the company to the selected credit plan."}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                className="rounded-xl bg-button-secondary px-4 py-2 text-sm font-medium text-body hover:bg-background-primary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleChangePlan}
+                disabled={!selectedPlanCode || setCompanyPlanMutation.isPending || companyCreditPlans.length === 0}
+                className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+              >
+                {setCompanyPlanMutation.isPending ? "Saving..." : "Save tier"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
