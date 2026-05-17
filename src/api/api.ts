@@ -86,8 +86,8 @@ export const adminApi = {
         api.post(`/admin/companies/${id}/unfreeze`),
     addCompanyCredits: (id: string, amount: number) =>
         api.post(`/admin/companies/${id}/add-credits`, { amount }),
-    upgradeTier: (id: string) =>
-        api.post(`/admin/companies/${id}/upgrade-tier`),
+    setCompanyPlan: (id: string, planCode: string) =>
+        api.put<ApiResponse<Company>>(`/admin/companies/${id}`, { planCode }),
 
     // Credit Ledger - /admin/ledger/*
     getCreditLedger: (params?: { userId?: string; companyId?: string }) =>
@@ -398,9 +398,11 @@ export const adminApi = {
             .then((r) => r.data.data),
 
     // Credit Plans
-    getCreditPlans: () =>
+    getCreditPlans: (companyId?: string) =>
         api
-            .get<ApiResponse<CreditPlan[]>>('/user-credit-plans')
+            .get<ApiResponse<CreditPlan[]>>('/user-credit-plans', {
+                params: companyId ? { companyId } : undefined,
+            })
             .then((r) => r.data.data),
     createCustomCreditPlan: (data: Partial<CreditPlan>) =>
         api

@@ -146,8 +146,9 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<ManagedUser> }) => adminApi.updateUser(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user(variables.id) });
     },
   });
 };
@@ -166,8 +167,9 @@ export const useSuspendUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.suspendUser(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user(id) });
     },
   });
 };
@@ -176,8 +178,9 @@ export const useActivateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => adminApi.activateUser(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      queryClient.invalidateQueries({ queryKey: queryKeys.user(id) });
     },
   });
 };
@@ -246,8 +249,9 @@ export const useUpdateCompany = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => adminApi.updateCompany(id, data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies });
+      queryClient.invalidateQueries({ queryKey: queryKeys.company(variables.id) });
     },
   });
 };
@@ -294,12 +298,13 @@ export const useAddCompanyCredits = () => {
   });
 };
 
-export const useUpgradeTier = () => {
+export const useSetCompanyPlan = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => adminApi.upgradeTier(id),
-    onSuccess: () => {
+    mutationFn: ({ id, planCode }: { id: string; planCode: string }) => adminApi.setCompanyPlan(id, planCode),
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies });
+      queryClient.invalidateQueries({ queryKey: queryKeys.company(variables.id) });
     },
   });
 };
@@ -926,10 +931,10 @@ export const useRevokeDoctor = () => {
   });
 };
 
-export const useCreditPlans = () => {
+export const useCreditPlans = (companyId?: string) => {
   return useQuery({
-    queryKey: ["admin", "credit-plans"],
-    queryFn: () => adminApi.getCreditPlans(),
+    queryKey: ["admin", "credit-plans", companyId] as const,
+    queryFn: () => adminApi.getCreditPlans(companyId),
   });
 };
 

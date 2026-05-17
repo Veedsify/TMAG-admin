@@ -65,7 +65,7 @@ export interface Company {
   activeEmployees: number;
   billingStatus: "active" | "overdue" | "frozen";
   contractRenewal: string;
-  tier: "standard" | "enterprise";
+  tier: string;
   hrAdmins: string[];
   contactEmail: string;
   contactPhone?: string;
